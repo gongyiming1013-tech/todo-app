@@ -700,7 +700,11 @@
                 btn.textContent = '发送重置链接';
 
                 if (error) {
-                    showMessage('发送失败：' + error.message, 'error');
+                    if (error.message.includes('rate limit') || error.message.includes('Rate limit')) {
+                        showMessage('发送过于频繁，请稍后再试（约1小时后）', 'error');
+                    } else {
+                        showMessage('发送失败：' + error.message, 'error');
+                    }
                 } else {
                     showMessage('重置链接已发送到您的邮箱，请查收', 'success');
                 }
