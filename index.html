@@ -481,33 +481,42 @@
         const SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error('Supabase SDK 加载失败:', e);
+        }
 
         let currentUser = null;
         let todos = [];
 
         // 初始化
         async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                showApp();
-                loadTodos();
-                subscribeToChanges();
-            }
-
-            // 监听登录状态变化
-            supabase.auth.onAuthStateChange((event, session) => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     currentUser = session.user;
                     showApp();
                     loadTodos();
                     subscribeToChanges();
-                } else {
-                    currentUser = null;
-                    showAuth();
                 }
-            });
+
+                // 监听登录状态变化
+                supabase.auth.onAuthStateChange((event, session) => {
+                    if (session) {
+                        currentUser = session.user;
+                        showApp();
+                        loadTodos();
+                        subscribeToChanges();
+                    } else {
+                        currentUser = null;
+                        showAuth();
+                    }
+                });
+            } catch (error) {
+                console.error('初始化失败:', error);
+            }
         }
 
         function showAuth() {
