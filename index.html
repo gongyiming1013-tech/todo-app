@@ -533,13 +533,11 @@
             setTimeout(function() { el.classList.remove('show'); }, 2000);
         }
 
-        // 绑定事件监听器
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('registerLink').addEventListener('click', showRegister);
-            document.getElementById('loginLink').addEventListener('click', showLogin);
-            document.getElementById('forgotLink').addEventListener('click', showForgotPassword);
-            document.getElementById('backToLoginLink').addEventListener('click', showLogin);
-        });
+        // 立即绑定事件监听器（因为 script 在 DOM 元素之后）
+        document.getElementById('registerLink').addEventListener('click', showRegister);
+        document.getElementById('loginLink').addEventListener('click', showLogin);
+        document.getElementById('forgotLink').addEventListener('click', showForgotPassword);
+        document.getElementById('backToLoginLink').addEventListener('click', showLogin);
     </script>
 
     <!-- 加载 Supabase SDK -->
