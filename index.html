@@ -616,7 +616,12 @@
                 btn.textContent = '注册';
 
                 if (error) {
-                    showMessage('注册失败：' + error.message, 'error');
+                    if (error.message.includes('already registered') || error.message.includes('already exists')) {
+                        showMessage('该邮箱已注册，请直接登录。如果忘记密码，可点击"忘记密码"重置', 'error');
+                        showLogin();
+                    } else {
+                        showMessage('注册失败：' + error.message, 'error');
+                    }
                 } else {
                     showMessage('注册成功！请先到邮箱点击验证链接，然后再回来登录', 'success');
                 }
