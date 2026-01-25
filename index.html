@@ -31,7 +31,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* 登录界面 */
         .auth-container {
             background: white;
             border-radius: 15px;
@@ -118,7 +117,6 @@
             color: #721c24;
         }
 
-        /* 主界面 */
         .app-container {
             display: none;
         }
@@ -187,10 +185,6 @@
             background: #45a049;
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-
-        #addBtn:active {
-            transform: translateY(0);
         }
 
         #addBtn:disabled {
@@ -377,40 +371,14 @@
         }
 
         @media (max-width: 480px) {
-            body {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-                margin-bottom: 20px;
-            }
-
-            .input-section {
-                flex-direction: column;
-            }
-
-            #addBtn {
-                width: 100%;
-            }
-
-            .delete-btn {
-                opacity: 1;
-            }
-
-            .todo-item {
-                padding: 15px;
-            }
-
-            .auth-container {
-                padding: 25px;
-            }
-
-            .user-bar {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
+            body { padding: 15px; }
+            h1 { font-size: 1.5rem; margin-bottom: 20px; }
+            .input-section { flex-direction: column; }
+            #addBtn { width: 100%; }
+            .delete-btn { opacity: 1; }
+            .todo-item { padding: 15px; }
+            .auth-container { padding: 25px; }
+            .user-bar { flex-direction: column; gap: 10px; text-align: center; }
         }
     </style>
 </head>
@@ -418,7 +386,6 @@
     <div class="container">
         <h1>待办清单</h1>
 
-        <!-- 登录界面 -->
         <div class="auth-container" id="authContainer">
             <h2>欢迎使用</h2>
             <p>登录后可在多设备间同步数据</p>
@@ -448,7 +415,6 @@
             </div>
         </div>
 
-        <!-- 主应用界面 -->
         <div class="app-container" id="appContainer">
             <div class="user-bar">
                 <span class="user-email" id="userEmail"></span>
@@ -476,9 +442,18 @@
         <span>同步中...</span>
     </div>
 
-    <!-- 先定义所有 UI 函数 -->
-    <script>
-        // UI 函数 - 这些函数不依赖 Supabase
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+        // Supabase 配置
+        const SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
+
+        let supabase = null;
+        let currentUser = null;
+        let todos = [];
+
+        // UI 函数
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
@@ -501,7 +476,7 @@
         }
 
         function showMessage(text, type) {
-            var msgEl = document.getElementById('authMessage');
+            const msgEl = document.getElementById('authMessage');
             msgEl.className = 'message ' + type;
             msgEl.textContent = text;
             msgEl.style.display = 'block';
@@ -522,52 +497,32 @@
         }
 
         function escapeHtml(text) {
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
         function showSyncIndicator() {
-            var el = document.getElementById('syncIndicator');
+            const el = document.getElementById('syncIndicator');
             el.classList.add('show');
-            setTimeout(function() { el.classList.remove('show'); }, 2000);
+            setTimeout(() => el.classList.remove('show'), 2000);
         }
 
-        // 立即绑定事件监听器（因为 script 在 DOM 元素之后）
-        document.getElementById('registerLink').addEventListener('click', showRegister);
-        document.getElementById('loginLink').addEventListener('click', showLogin);
-        document.getElementById('forgotLink').addEventListener('click', showForgotPassword);
-        document.getElementById('backToLoginLink').addEventListener('click', showLogin);
-    </script>
-
-    <!-- 加载 Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-    <!-- 应用逻辑 -->
-    <script>
-        // Supabase 配置
-        var SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
-
-        var supabase = null;
-        var currentUser = null;
-        var todos = [];
-
-        // 检查 Supabase 是否加载成功
-        if (window.supabase && typeof window.supabase.createClient === 'function') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            console.error('Supabase SDK 加载失败，window.supabase =', window.supabase);
+        // 初始化 Supabase
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase 初始化成功');
+        } catch (e) {
+            console.error('Supabase 初始化失败:', e);
             showMessage('网络连接失败，请刷新页面重试', 'error');
         }
 
-        // 初始化
+        // 初始化应用
         async function init() {
             if (!supabase) return;
 
             try {
-                var result = await supabase.auth.getSession();
-                var session = result.data.session;
+                const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     currentUser = session.user;
                     document.getElementById('userEmail').textContent = currentUser.email;
@@ -576,8 +531,7 @@
                     subscribeToChanges();
                 }
 
-                // 监听登录状态变化
-                supabase.auth.onAuthStateChange(function(event, session) {
+                supabase.auth.onAuthStateChange((event, session) => {
                     if (session) {
                         currentUser = session.user;
                         document.getElementById('userEmail').textContent = currentUser.email;
@@ -600,29 +554,28 @@
                 return;
             }
 
-            var email = document.getElementById('emailInput').value.trim();
-            var password = document.getElementById('passwordInput').value;
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
 
             if (!email || !password) {
                 showMessage('请输入邮箱和密码', 'error');
                 return;
             }
 
-            var btn = document.getElementById('loginBtn');
+            const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.textContent = '登录中...';
 
             try {
-                var result = await supabase.auth.signInWithPassword({ email: email, password: password });
-
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
                 btn.disabled = false;
                 btn.textContent = '登录';
 
-                if (result.error) {
-                    if (result.error.message.includes('Invalid login credentials')) {
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) {
                         showMessage('用户不存在或密码错误，请先注册账号或者尝试其他密码', 'error');
                     } else {
-                        showMessage('登录失败：' + result.error.message, 'error');
+                        showMessage('登录失败：' + error.message, 'error');
                     }
                 }
             } catch (e) {
@@ -638,8 +591,8 @@
                 return;
             }
 
-            var email = document.getElementById('regEmailInput').value.trim();
-            var password = document.getElementById('regPasswordInput').value;
+            const email = document.getElementById('regEmailInput').value.trim();
+            const password = document.getElementById('regPasswordInput').value;
 
             if (!email || !password) {
                 showMessage('请输入邮箱和密码', 'error');
@@ -651,18 +604,17 @@
                 return;
             }
 
-            var btn = document.getElementById('registerBtn');
+            const btn = document.getElementById('registerBtn');
             btn.disabled = true;
             btn.textContent = '注册中...';
 
             try {
-                var result = await supabase.auth.signUp({ email: email, password: password });
-
+                const { error } = await supabase.auth.signUp({ email, password });
                 btn.disabled = false;
                 btn.textContent = '注册';
 
-                if (result.error) {
-                    showMessage('注册失败：' + result.error.message, 'error');
+                if (error) {
+                    showMessage('注册失败：' + error.message, 'error');
                 } else {
                     showMessage('注册成功！请查收验证邮件后登录', 'success');
                     showLogin();
@@ -680,27 +632,26 @@
                 return;
             }
 
-            var email = document.getElementById('resetEmailInput').value.trim();
+            const email = document.getElementById('resetEmailInput').value.trim();
 
             if (!email) {
                 showMessage('请输入邮箱地址', 'error');
                 return;
             }
 
-            var btn = document.getElementById('resetBtn');
+            const btn = document.getElementById('resetBtn');
             btn.disabled = true;
             btn.textContent = '发送中...';
 
             try {
-                var result = await supabase.auth.resetPasswordForEmail(email, {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
                     redirectTo: window.location.origin + window.location.pathname
                 });
-
                 btn.disabled = false;
                 btn.textContent = '发送重置链接';
 
-                if (result.error) {
-                    showMessage('发送失败：' + result.error.message, 'error');
+                if (error) {
+                    showMessage('发送失败：' + error.message, 'error');
                 } else {
                     showMessage('重置链接已发送到您的邮箱，请查收', 'success');
                 }
@@ -717,38 +668,36 @@
             todos = [];
         }
 
-        // 加载待办事项
         async function loadTodos() {
             if (!supabase || !currentUser) return;
 
             try {
-                var result = await supabase
+                const { data, error } = await supabase
                     .from('todos')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
-                if (result.error) {
-                    console.error('加载失败:', result.error);
+                if (error) {
+                    console.error('加载失败:', error);
                     return;
                 }
 
-                todos = result.data || [];
+                todos = data || [];
                 renderTodos();
             } catch (e) {
                 console.error('加载失败:', e);
             }
         }
 
-        // 实时订阅
         function subscribeToChanges() {
             if (!supabase || !currentUser) return;
 
             supabase
                 .channel('todos')
                 .on('postgres_changes',
-                    { event: '*', schema: 'public', table: 'todos', filter: 'user_id=eq.' + currentUser.id },
-                    function(payload) {
+                    { event: '*', schema: 'public', table: 'todos', filter: `user_id=eq.${currentUser.id}` },
+                    () => {
                         showSyncIndicator();
                         loadTodos();
                     }
@@ -757,63 +706,63 @@
         }
 
         function renderTodos() {
-            var todoList = document.getElementById('todoList');
-            var stats = document.getElementById('stats');
+            const todoList = document.getElementById('todoList');
+            const stats = document.getElementById('stats');
 
             if (todos.length === 0) {
-                todoList.innerHTML = '<div class="empty-state">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
-                    '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>' +
-                    '</svg>' +
-                    '<p>暂无待办事项</p>' +
-                    '<p style="font-size: 14px; margin-top: 8px;">添加一些任务开始吧</p>' +
-                    '</div>';
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <p>暂无待办事项</p>
+                        <p style="font-size: 14px; margin-top: 8px;">添加一些任务开始吧</p>
+                    </div>`;
                 stats.innerHTML = '';
                 return;
             }
 
-            var html = '';
-            for (var i = 0; i < todos.length; i++) {
-                var todo = todos[i];
-                html += '<div class="todo-item ' + (todo.completed ? 'completed' : '') + '">' +
-                    '<div class="checkbox" data-id="' + todo.id + '" data-completed="' + !todo.completed + '"></div>' +
-                    '<span class="todo-text">' + escapeHtml(todo.text) + '</span>' +
-                    '<button class="delete-btn" data-id="' + todo.id + '">' +
-                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-                    '<path d="M18 6L6 18M6 6l12 12"/>' +
-                    '</svg>' +
-                    '</button>' +
-                    '</div>';
-            }
-            todoList.innerHTML = html;
+            todoList.innerHTML = todos.map(todo => `
+                <div class="todo-item ${todo.completed ? 'completed' : ''}">
+                    <div class="checkbox" data-id="${todo.id}" data-completed="${!todo.completed}"></div>
+                    <span class="todo-text">${escapeHtml(todo.text)}</span>
+                    <button class="delete-btn" data-id="${todo.id}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
 
-            var completed = todos.filter(function(t) { return t.completed; }).length;
-            var total = todos.length;
-            stats.innerHTML = '<span>总计: ' + total + '</span>' +
-                '<span>已完成: ' + completed + '</span>' +
-                '<span>未完成: ' + (total - completed) + '</span>';
+            const completed = todos.filter(t => t.completed).length;
+            const total = todos.length;
+            stats.innerHTML = `
+                <span>总计: ${total}</span>
+                <span>已完成: ${completed}</span>
+                <span>未完成: ${total - completed}</span>
+            `;
         }
 
         async function addTodo() {
             if (!supabase || !currentUser) return;
 
-            var input = document.getElementById('todoInput');
-            var text = input.value.trim();
-            var btn = document.getElementById('addBtn');
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+            const btn = document.getElementById('addBtn');
 
             if (!text) return;
 
             btn.disabled = true;
 
             try {
-                var result = await supabase
+                const { error } = await supabase
                     .from('todos')
-                    .insert([{ text: text, user_id: currentUser.id }]);
+                    .insert([{ text, user_id: currentUser.id }]);
 
                 btn.disabled = false;
 
-                if (result.error) {
-                    alert('添加失败: ' + result.error.message);
+                if (error) {
+                    alert('添加失败: ' + error.message);
                     return;
                 }
 
@@ -829,13 +778,13 @@
             if (!supabase) return;
 
             try {
-                var result = await supabase
+                const { error } = await supabase
                     .from('todos')
-                    .update({ completed: completed })
+                    .update({ completed })
                     .eq('id', id);
 
-                if (result.error) {
-                    alert('更新失败: ' + result.error.message);
+                if (error) {
+                    alert('更新失败: ' + error.message);
                     return;
                 }
 
@@ -849,13 +798,13 @@
             if (!supabase) return;
 
             try {
-                var result = await supabase
+                const { error } = await supabase
                     .from('todos')
                     .delete()
                     .eq('id', id);
 
-                if (result.error) {
-                    alert('删除失败: ' + result.error.message);
+                if (error) {
+                    alert('删除失败: ' + error.message);
                     return;
                 }
 
@@ -865,39 +814,41 @@
             }
         }
 
-        // 直接绑定事件（因为 script 在 DOM 元素之后，DOM 已经就绪）
+        // 绑定事件
+        document.getElementById('registerLink').addEventListener('click', showRegister);
+        document.getElementById('loginLink').addEventListener('click', showLogin);
+        document.getElementById('forgotLink').addEventListener('click', showForgotPassword);
+        document.getElementById('backToLoginLink').addEventListener('click', showLogin);
         document.getElementById('loginBtn').addEventListener('click', handleLogin);
         document.getElementById('registerBtn').addEventListener('click', handleRegister);
         document.getElementById('resetBtn').addEventListener('click', handleResetPassword);
         document.getElementById('logoutBtn').addEventListener('click', handleLogout);
         document.getElementById('addBtn').addEventListener('click', addTodo);
 
-        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+        document.getElementById('todoInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTodo();
         });
 
-        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
 
-        // 事件委托处理 todo 操作
-        document.getElementById('todoList').addEventListener('click', function(e) {
-            var target = e.target.closest('.checkbox');
-            if (target) {
-                var id = target.getAttribute('data-id');
-                var completed = target.getAttribute('data-completed') === 'true';
+        document.getElementById('todoList').addEventListener('click', (e) => {
+            const checkbox = e.target.closest('.checkbox');
+            if (checkbox) {
+                const id = checkbox.dataset.id;
+                const completed = checkbox.dataset.completed === 'true';
                 toggleTodo(id, completed);
                 return;
             }
 
-            target = e.target.closest('.delete-btn');
-            if (target) {
-                var id = target.getAttribute('data-id');
-                deleteTodo(id);
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                deleteTodo(deleteBtn.dataset.id);
             }
         });
 
-        // 初始化应用
+        // 启动应用
         init();
     </script>
 </body>
