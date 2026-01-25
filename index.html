@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>待办清单</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -106,6 +105,7 @@
             border-radius: 8px;
             margin-bottom: 15px;
             font-size: 14px;
+            display: none;
         }
 
         .message.success {
@@ -422,29 +422,29 @@
         <div class="auth-container" id="authContainer">
             <h2>欢迎使用</h2>
             <p>登录后可在多设备间同步数据</p>
-            <div id="authMessage"></div>
+            <div id="authMessage" class="message"></div>
 
             <div id="loginForm">
                 <input type="email" class="auth-input" id="emailInput" placeholder="输入邮箱地址">
                 <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码">
-                <button class="auth-btn" id="loginBtn" onclick="handleLogin()">登录</button>
+                <button class="auth-btn" id="loginBtn">登录</button>
                 <div class="auth-divider">
-                    <span class="auth-link" onclick="showForgotPassword()">忘记密码？</span>
+                    <span class="auth-link" id="forgotLink">忘记密码？</span>
                 </div>
-                <div class="auth-divider">还没有账号？<span class="auth-link" onclick="showRegister()">注册</span></div>
+                <div class="auth-divider">还没有账号？<span class="auth-link" id="registerLink">注册</span></div>
             </div>
 
             <div id="forgotPasswordForm" style="display:none;">
                 <input type="email" class="auth-input" id="resetEmailInput" placeholder="输入注册时的邮箱地址">
-                <button class="auth-btn" id="resetBtn" onclick="handleResetPassword()">发送重置链接</button>
-                <div class="auth-divider">想起密码了？<span class="auth-link" onclick="showLogin()">返回登录</span></div>
+                <button class="auth-btn" id="resetBtn">发送重置链接</button>
+                <div class="auth-divider">想起密码了？<span class="auth-link" id="backToLoginLink">返回登录</span></div>
             </div>
 
             <div id="registerForm" style="display:none;">
                 <input type="email" class="auth-input" id="regEmailInput" placeholder="输入邮箱地址">
                 <input type="password" class="auth-input" id="regPasswordInput" placeholder="设置密码（至少6位）">
-                <button class="auth-btn" id="registerBtn" onclick="handleRegister()">注册</button>
-                <div class="auth-divider">已有账号？<span class="auth-link" onclick="showLogin()">登录</span></div>
+                <button class="auth-btn" id="registerBtn">注册</button>
+                <div class="auth-divider">已有账号？<span class="auth-link" id="loginLink">登录</span></div>
             </div>
         </div>
 
@@ -452,12 +452,12 @@
         <div class="app-container" id="appContainer">
             <div class="user-bar">
                 <span class="user-email" id="userEmail"></span>
-                <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+                <button class="logout-btn" id="logoutBtn">退出登录</button>
             </div>
 
             <div class="input-section">
-                <input type="text" id="todoInput" placeholder="添加新的待办事项..." onkeypress="handleKeyPress(event)">
-                <button id="addBtn" onclick="addTodo()">添加</button>
+                <input type="text" id="todoInput" placeholder="添加新的待办事项...">
+                <button id="addBtn">添加</button>
             </div>
 
             <div class="todo-list" id="todoList">
@@ -476,60 +476,9 @@
         <span>同步中...</span>
     </div>
 
+    <!-- 先定义所有 UI 函数 -->
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
-
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.error('Supabase SDK 加载失败:', e);
-        }
-
-        let currentUser = null;
-        let todos = [];
-
-        // 初始化
-        async function init() {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    currentUser = session.user;
-                    showApp();
-                    loadTodos();
-                    subscribeToChanges();
-                }
-
-                // 监听登录状态变化
-                supabase.auth.onAuthStateChange((event, session) => {
-                    if (session) {
-                        currentUser = session.user;
-                        showApp();
-                        loadTodos();
-                        subscribeToChanges();
-                    } else {
-                        currentUser = null;
-                        showAuth();
-                    }
-                });
-            } catch (error) {
-                console.error('初始化失败:', error);
-            }
-        }
-
-        function showAuth() {
-            document.getElementById('authContainer').style.display = 'block';
-            document.getElementById('appContainer').style.display = 'none';
-        }
-
-        function showApp() {
-            document.getElementById('authContainer').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            document.getElementById('userEmail').textContent = currentUser.email;
-        }
-
+        // UI 函数 - 这些函数不依赖 Supabase
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
@@ -552,7 +501,7 @@
         }
 
         function showMessage(text, type) {
-            const msgEl = document.getElementById('authMessage');
+            var msgEl = document.getElementById('authMessage');
             msgEl.className = 'message ' + type;
             msgEl.textContent = text;
             msgEl.style.display = 'block';
@@ -562,36 +511,137 @@
             document.getElementById('authMessage').style.display = 'none';
         }
 
+        function showAuth() {
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showSyncIndicator() {
+            var el = document.getElementById('syncIndicator');
+            el.classList.add('show');
+            setTimeout(function() { el.classList.remove('show'); }, 2000);
+        }
+
+        // 绑定事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('registerLink').addEventListener('click', showRegister);
+            document.getElementById('loginLink').addEventListener('click', showLogin);
+            document.getElementById('forgotLink').addEventListener('click', showForgotPassword);
+            document.getElementById('backToLoginLink').addEventListener('click', showLogin);
+        });
+    </script>
+
+    <!-- 加载 Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <!-- 应用逻辑 -->
+    <script>
+        // Supabase 配置
+        var SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
+
+        var supabase = null;
+        var currentUser = null;
+        var todos = [];
+
+        // 检查 Supabase 是否加载成功
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.error('Supabase SDK 加载失败');
+            showMessage('网络连接失败，请刷新页面重试', 'error');
+        }
+
+        // 初始化
+        async function init() {
+            if (!supabase) return;
+
+            try {
+                var result = await supabase.auth.getSession();
+                var session = result.data.session;
+                if (session) {
+                    currentUser = session.user;
+                    document.getElementById('userEmail').textContent = currentUser.email;
+                    showApp();
+                    loadTodos();
+                    subscribeToChanges();
+                }
+
+                // 监听登录状态变化
+                supabase.auth.onAuthStateChange(function(event, session) {
+                    if (session) {
+                        currentUser = session.user;
+                        document.getElementById('userEmail').textContent = currentUser.email;
+                        showApp();
+                        loadTodos();
+                        subscribeToChanges();
+                    } else {
+                        currentUser = null;
+                        showAuth();
+                    }
+                });
+            } catch (error) {
+                console.error('初始化失败:', error);
+            }
+        }
+
         async function handleLogin() {
-            const email = document.getElementById('emailInput').value.trim();
-            const password = document.getElementById('passwordInput').value;
+            if (!supabase) {
+                showMessage('网络连接失败，请刷新页面重试', 'error');
+                return;
+            }
+
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
 
             if (!email || !password) {
                 showMessage('请输入邮箱和密码', 'error');
                 return;
             }
 
-            const btn = document.getElementById('loginBtn');
+            var btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.textContent = '登录中...';
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            try {
+                var result = await supabase.auth.signInWithPassword({ email: email, password: password });
 
-            btn.disabled = false;
-            btn.textContent = '登录';
+                btn.disabled = false;
+                btn.textContent = '登录';
 
-            if (error) {
-                if (error.message.includes('Invalid login credentials')) {
-                    showMessage('用户不存在或密码错误，请先注册账号或者尝试其他密码', 'error');
-                } else {
-                    showMessage('登录失败：' + error.message, 'error');
+                if (result.error) {
+                    if (result.error.message.includes('Invalid login credentials')) {
+                        showMessage('用户不存在或密码错误，请先注册账号或者尝试其他密码', 'error');
+                    } else {
+                        showMessage('登录失败：' + result.error.message, 'error');
+                    }
                 }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = '登录';
+                showMessage('登录失败：' + e.message, 'error');
             }
         }
 
         async function handleRegister() {
-            const email = document.getElementById('regEmailInput').value.trim();
-            const password = document.getElementById('regPasswordInput').value;
+            if (!supabase) {
+                showMessage('网络连接失败，请刷新页面重试', 'error');
+                return;
+            }
+
+            var email = document.getElementById('regEmailInput').value.trim();
+            var password = document.getElementById('regPasswordInput').value;
 
             if (!email || !password) {
                 showMessage('请输入邮箱和密码', 'error');
@@ -603,78 +653,104 @@
                 return;
             }
 
-            const btn = document.getElementById('registerBtn');
+            var btn = document.getElementById('registerBtn');
             btn.disabled = true;
             btn.textContent = '注册中...';
 
-            const { error } = await supabase.auth.signUp({ email, password });
+            try {
+                var result = await supabase.auth.signUp({ email: email, password: password });
 
-            btn.disabled = false;
-            btn.textContent = '注册';
+                btn.disabled = false;
+                btn.textContent = '注册';
 
-            if (error) {
-                showMessage('注册失败：' + error.message, 'error');
-            } else {
-                showMessage('注册成功！请查收验证邮件后登录', 'success');
-                showLogin();
+                if (result.error) {
+                    showMessage('注册失败：' + result.error.message, 'error');
+                } else {
+                    showMessage('注册成功！请查收验证邮件后登录', 'success');
+                    showLogin();
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = '注册';
+                showMessage('注册失败：' + e.message, 'error');
             }
         }
 
         async function handleResetPassword() {
-            const email = document.getElementById('resetEmailInput').value.trim();
+            if (!supabase) {
+                showMessage('网络连接失败，请刷新页面重试', 'error');
+                return;
+            }
+
+            var email = document.getElementById('resetEmailInput').value.trim();
 
             if (!email) {
                 showMessage('请输入邮箱地址', 'error');
                 return;
             }
 
-            const btn = document.getElementById('resetBtn');
+            var btn = document.getElementById('resetBtn');
             btn.disabled = true;
             btn.textContent = '发送中...';
 
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + window.location.pathname
-            });
+            try {
+                var result = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + window.location.pathname
+                });
 
-            btn.disabled = false;
-            btn.textContent = '发送重置链接';
+                btn.disabled = false;
+                btn.textContent = '发送重置链接';
 
-            if (error) {
-                showMessage('发送失败：' + error.message, 'error');
-            } else {
-                showMessage('重置链接已发送到您的邮箱，请查收', 'success');
+                if (result.error) {
+                    showMessage('发送失败：' + result.error.message, 'error');
+                } else {
+                    showMessage('重置链接已发送到您的邮箱，请查收', 'success');
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = '发送重置链接';
+                showMessage('发送失败：' + e.message, 'error');
             }
         }
 
         async function handleLogout() {
+            if (!supabase) return;
             await supabase.auth.signOut();
             todos = [];
         }
 
         // 加载待办事项
         async function loadTodos() {
-            const { data, error } = await supabase
-                .from('todos')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
+            if (!supabase || !currentUser) return;
 
-            if (error) {
-                console.error('加载失败:', error);
-                return;
+            try {
+                var result = await supabase
+                    .from('todos')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (result.error) {
+                    console.error('加载失败:', result.error);
+                    return;
+                }
+
+                todos = result.data || [];
+                renderTodos();
+            } catch (e) {
+                console.error('加载失败:', e);
             }
-
-            todos = data || [];
-            renderTodos();
         }
 
         // 实时订阅
         function subscribeToChanges() {
+            if (!supabase || !currentUser) return;
+
             supabase
                 .channel('todos')
                 .on('postgres_changes',
-                    { event: '*', schema: 'public', table: 'todos', filter: `user_id=eq.${currentUser.id}` },
-                    (payload) => {
+                    { event: '*', schema: 'public', table: 'todos', filter: 'user_id=eq.' + currentUser.id },
+                    function(payload) {
                         showSyncIndicator();
                         loadTodos();
                     }
@@ -682,117 +758,151 @@
                 .subscribe();
         }
 
-        function showSyncIndicator() {
-            const el = document.getElementById('syncIndicator');
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 2000);
-        }
-
         function renderTodos() {
-            const todoList = document.getElementById('todoList');
-            const stats = document.getElementById('stats');
+            var todoList = document.getElementById('todoList');
+            var stats = document.getElementById('stats');
 
             if (todos.length === 0) {
-                todoList.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                        </svg>
-                        <p>暂无待办事项</p>
-                        <p style="font-size: 14px; margin-top: 8px;">添加一些任务开始吧</p>
-                    </div>
-                `;
+                todoList.innerHTML = '<div class="empty-state">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+                    '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>' +
+                    '</svg>' +
+                    '<p>暂无待办事项</p>' +
+                    '<p style="font-size: 14px; margin-top: 8px;">添加一些任务开始吧</p>' +
+                    '</div>';
                 stats.innerHTML = '';
                 return;
             }
 
-            todoList.innerHTML = todos.map(todo => `
-                <div class="todo-item ${todo.completed ? 'completed' : ''}">
-                    <div class="checkbox" onclick="toggleTodo('${todo.id}', ${!todo.completed})"></div>
-                    <span class="todo-text">${escapeHtml(todo.text)}</span>
-                    <button class="delete-btn" onclick="deleteTodo('${todo.id}')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 6L6 18M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
+            var html = '';
+            for (var i = 0; i < todos.length; i++) {
+                var todo = todos[i];
+                html += '<div class="todo-item ' + (todo.completed ? 'completed' : '') + '">' +
+                    '<div class="checkbox" data-id="' + todo.id + '" data-completed="' + !todo.completed + '"></div>' +
+                    '<span class="todo-text">' + escapeHtml(todo.text) + '</span>' +
+                    '<button class="delete-btn" data-id="' + todo.id + '">' +
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                    '<path d="M18 6L6 18M6 6l12 12"/>' +
+                    '</svg>' +
+                    '</button>' +
+                    '</div>';
+            }
+            todoList.innerHTML = html;
 
-            const completed = todos.filter(t => t.completed).length;
-            const total = todos.length;
-            stats.innerHTML = `
-                <span>总计: ${total}</span>
-                <span>已完成: ${completed}</span>
-                <span>未完成: ${total - completed}</span>
-            `;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            var completed = todos.filter(function(t) { return t.completed; }).length;
+            var total = todos.length;
+            stats.innerHTML = '<span>总计: ' + total + '</span>' +
+                '<span>已完成: ' + completed + '</span>' +
+                '<span>未完成: ' + (total - completed) + '</span>';
         }
 
         async function addTodo() {
-            const input = document.getElementById('todoInput');
-            const text = input.value.trim();
-            const btn = document.getElementById('addBtn');
+            if (!supabase || !currentUser) return;
+
+            var input = document.getElementById('todoInput');
+            var text = input.value.trim();
+            var btn = document.getElementById('addBtn');
 
             if (!text) return;
 
             btn.disabled = true;
 
-            const { error } = await supabase
-                .from('todos')
-                .insert([{ text, user_id: currentUser.id }]);
+            try {
+                var result = await supabase
+                    .from('todos')
+                    .insert([{ text: text, user_id: currentUser.id }]);
 
-            btn.disabled = false;
+                btn.disabled = false;
 
-            if (error) {
-                alert('添加失败: ' + error.message);
-                return;
-            }
+                if (result.error) {
+                    alert('添加失败: ' + result.error.message);
+                    return;
+                }
 
-            input.value = '';
-            loadTodos();
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                addTodo();
+                input.value = '';
+                loadTodos();
+            } catch (e) {
+                btn.disabled = false;
+                alert('添加失败: ' + e.message);
             }
         }
 
         async function toggleTodo(id, completed) {
-            const { error } = await supabase
-                .from('todos')
-                .update({ completed })
-                .eq('id', id);
+            if (!supabase) return;
 
-            if (error) {
-                alert('更新失败: ' + error.message);
-                return;
+            try {
+                var result = await supabase
+                    .from('todos')
+                    .update({ completed: completed })
+                    .eq('id', id);
+
+                if (result.error) {
+                    alert('更新失败: ' + result.error.message);
+                    return;
+                }
+
+                loadTodos();
+            } catch (e) {
+                alert('更新失败: ' + e.message);
             }
-
-            loadTodos();
         }
 
         async function deleteTodo(id) {
-            const { error } = await supabase
-                .from('todos')
-                .delete()
-                .eq('id', id);
+            if (!supabase) return;
 
-            if (error) {
-                alert('删除失败: ' + error.message);
-                return;
+            try {
+                var result = await supabase
+                    .from('todos')
+                    .delete()
+                    .eq('id', id);
+
+                if (result.error) {
+                    alert('删除失败: ' + result.error.message);
+                    return;
+                }
+
+                loadTodos();
+            } catch (e) {
+                alert('删除失败: ' + e.message);
             }
-
-            loadTodos();
         }
 
-        // 启动应用
-        init();
+        // 绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('registerBtn').addEventListener('click', handleRegister);
+            document.getElementById('resetBtn').addEventListener('click', handleResetPassword);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('addBtn').addEventListener('click', addTodo);
+
+            document.getElementById('todoInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addTodo();
+            });
+
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+
+            // 事件委托处理 todo 操作
+            document.getElementById('todoList').addEventListener('click', function(e) {
+                var target = e.target.closest('.checkbox');
+                if (target) {
+                    var id = target.getAttribute('data-id');
+                    var completed = target.getAttribute('data-completed') === 'true';
+                    toggleTodo(id, completed);
+                    return;
+                }
+
+                target = e.target.closest('.delete-btn');
+                if (target) {
+                    var id = target.getAttribute('data-id');
+                    deleteTodo(id);
+                }
+            });
+
+            // 初始化应用
+            init();
+        });
     </script>
 </body>
 </html>
