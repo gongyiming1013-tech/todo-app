@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>待办清单</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -29,6 +30,124 @@
             margin-bottom: 30px;
             font-size: 2rem;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 登录界面 */
+        .auth-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .auth-container h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .auth-container p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .auth-input:focus {
+            border-color: #667eea;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-divider {
+            margin: 20px 0;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .auth-link {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 主界面 */
+        .app-container {
+            display: none;
+        }
+
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .user-email {
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .input-section {
@@ -72,6 +191,12 @@
 
         #addBtn:active {
             transform: translateY(0);
+        }
+
+        #addBtn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .todo-list {
@@ -185,6 +310,26 @@
             opacity: 0.5;
         }
 
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .stats {
             display: flex;
             justify-content: center;
@@ -198,6 +343,37 @@
             background: rgba(255,255,255,0.2);
             padding: 8px 16px;
             border-radius: 20px;
+        }
+
+        .sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-indicator.show {
+            display: flex;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         @media (max-width: 480px) {
@@ -225,6 +401,16 @@
             .todo-item {
                 padding: 15px;
             }
+
+            .auth-container {
+                padding: 25px;
+            }
+
+            .user-bar {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -232,21 +418,217 @@
     <div class="container">
         <h1>待办清单</h1>
 
-        <div class="input-section">
-            <input type="text" id="todoInput" placeholder="添加新的待办事项..." onkeypress="handleKeyPress(event)">
-            <button id="addBtn" onclick="addTodo()">添加</button>
+        <!-- 登录界面 -->
+        <div class="auth-container" id="authContainer">
+            <h2>欢迎使用</h2>
+            <p>登录后可在多设备间同步数据</p>
+            <div id="authMessage"></div>
+
+            <div id="loginForm">
+                <input type="email" class="auth-input" id="emailInput" placeholder="输入邮箱地址">
+                <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码">
+                <button class="auth-btn" id="loginBtn" onclick="handleLogin()">登录</button>
+                <div class="auth-divider">还没有账号？<span class="auth-link" onclick="showRegister()">注册</span></div>
+            </div>
+
+            <div id="registerForm" style="display:none;">
+                <input type="email" class="auth-input" id="regEmailInput" placeholder="输入邮箱地址">
+                <input type="password" class="auth-input" id="regPasswordInput" placeholder="设置密码（至少6位）">
+                <button class="auth-btn" id="registerBtn" onclick="handleRegister()">注册</button>
+                <div class="auth-divider">已有账号？<span class="auth-link" onclick="showLogin()">登录</span></div>
+            </div>
         </div>
 
-        <div class="todo-list" id="todoList"></div>
+        <!-- 主应用界面 -->
+        <div class="app-container" id="appContainer">
+            <div class="user-bar">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+            </div>
 
-        <div class="stats" id="stats"></div>
+            <div class="input-section">
+                <input type="text" id="todoInput" placeholder="添加新的待办事项..." onkeypress="handleKeyPress(event)">
+                <button id="addBtn" onclick="addTodo()">添加</button>
+            </div>
+
+            <div class="todo-list" id="todoList">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <div class="sync-indicator" id="syncIndicator">
+        <div class="sync-dot"></div>
+        <span>同步中...</span>
     </div>
 
     <script>
-        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        // Supabase 配置
+        const SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_GtuKKrCFE-K4SpTtfWZePg_CxJOalD8';
 
-        function saveTodos() {
-            localStorage.setItem('todos', JSON.stringify(todos));
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let todos = [];
+
+        // 初始化
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showApp();
+                loadTodos();
+                subscribeToChanges();
+            }
+
+            // 监听登录状态变化
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    currentUser = session.user;
+                    showApp();
+                    loadTodos();
+                    subscribeToChanges();
+                } else {
+                    currentUser = null;
+                    showAuth();
+                }
+            });
+        }
+
+        function showAuth() {
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            clearMessage();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            clearMessage();
+        }
+
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('authMessage');
+            msgEl.className = 'message ' + type;
+            msgEl.textContent = text;
+            msgEl.style.display = 'block';
+        }
+
+        function clearMessage() {
+            document.getElementById('authMessage').style.display = 'none';
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+
+            if (!email || !password) {
+                showMessage('请输入邮箱和密码', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+            btn.disabled = false;
+            btn.textContent = '登录';
+
+            if (error) {
+                showMessage('登录失败：' + error.message, 'error');
+            }
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('regEmailInput').value.trim();
+            const password = document.getElementById('regPasswordInput').value;
+
+            if (!email || !password) {
+                showMessage('请输入邮箱和密码', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = '注册中...';
+
+            const { error } = await supabase.auth.signUp({ email, password });
+
+            btn.disabled = false;
+            btn.textContent = '注册';
+
+            if (error) {
+                showMessage('注册失败：' + error.message, 'error');
+            } else {
+                showMessage('注册成功！请查收验证邮件后登录', 'success');
+                showLogin();
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            todos = [];
+        }
+
+        // 加载待办事项
+        async function loadTodos() {
+            const { data, error } = await supabase
+                .from('todos')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('加载失败:', error);
+                return;
+            }
+
+            todos = data || [];
+            renderTodos();
+        }
+
+        // 实时订阅
+        function subscribeToChanges() {
+            supabase
+                .channel('todos')
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'todos', filter: `user_id=eq.${currentUser.id}` },
+                    (payload) => {
+                        showSyncIndicator();
+                        loadTodos();
+                    }
+                )
+                .subscribe();
+        }
+
+        function showSyncIndicator() {
+            const el = document.getElementById('syncIndicator');
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
         }
 
         function renderTodos() {
@@ -267,11 +649,11 @@
                 return;
             }
 
-            todoList.innerHTML = todos.map((todo, index) => `
+            todoList.innerHTML = todos.map(todo => `
                 <div class="todo-item ${todo.completed ? 'completed' : ''}">
-                    <div class="checkbox" onclick="toggleTodo(${index})"></div>
+                    <div class="checkbox" onclick="toggleTodo('${todo.id}', ${!todo.completed})"></div>
                     <span class="todo-text">${escapeHtml(todo.text)}</span>
-                    <button class="delete-btn" onclick="deleteTodo(${index})">
+                    <button class="delete-btn" onclick="deleteTodo('${todo.id}')">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
                         </svg>
@@ -294,16 +676,28 @@
             return div.innerHTML;
         }
 
-        function addTodo() {
+        async function addTodo() {
             const input = document.getElementById('todoInput');
             const text = input.value.trim();
+            const btn = document.getElementById('addBtn');
 
-            if (text) {
-                todos.unshift({ text, completed: false });
-                saveTodos();
-                renderTodos();
-                input.value = '';
+            if (!text) return;
+
+            btn.disabled = true;
+
+            const { error } = await supabase
+                .from('todos')
+                .insert([{ text, user_id: currentUser.id }]);
+
+            btn.disabled = false;
+
+            if (error) {
+                alert('添加失败: ' + error.message);
+                return;
             }
+
+            input.value = '';
+            loadTodos();
         }
 
         function handleKeyPress(event) {
@@ -312,20 +706,36 @@
             }
         }
 
-        function toggleTodo(index) {
-            todos[index].completed = !todos[index].completed;
-            saveTodos();
-            renderTodos();
+        async function toggleTodo(id, completed) {
+            const { error } = await supabase
+                .from('todos')
+                .update({ completed })
+                .eq('id', id);
+
+            if (error) {
+                alert('更新失败: ' + error.message);
+                return;
+            }
+
+            loadTodos();
         }
 
-        function deleteTodo(index) {
-            todos.splice(index, 1);
-            saveTodos();
-            renderTodos();
+        async function deleteTodo(id) {
+            const { error } = await supabase
+                .from('todos')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert('删除失败: ' + error.message);
+                return;
+            }
+
+            loadTodos();
         }
 
-        // 初始渲染
-        renderTodos();
+        // 启动应用
+        init();
     </script>
 </body>
 </html>
