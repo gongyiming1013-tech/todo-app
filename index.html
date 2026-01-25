@@ -865,42 +865,40 @@
             }
         }
 
-        // 绑定事件
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
-            document.getElementById('registerBtn').addEventListener('click', handleRegister);
-            document.getElementById('resetBtn').addEventListener('click', handleResetPassword);
-            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-            document.getElementById('addBtn').addEventListener('click', addTodo);
+        // 直接绑定事件（因为 script 在 DOM 元素之后，DOM 已经就绪）
+        document.getElementById('loginBtn').addEventListener('click', handleLogin);
+        document.getElementById('registerBtn').addEventListener('click', handleRegister);
+        document.getElementById('resetBtn').addEventListener('click', handleResetPassword);
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        document.getElementById('addBtn').addEventListener('click', addTodo);
 
-            document.getElementById('todoInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') addTodo();
-            });
-
-            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleLogin();
-            });
-
-            // 事件委托处理 todo 操作
-            document.getElementById('todoList').addEventListener('click', function(e) {
-                var target = e.target.closest('.checkbox');
-                if (target) {
-                    var id = target.getAttribute('data-id');
-                    var completed = target.getAttribute('data-completed') === 'true';
-                    toggleTodo(id, completed);
-                    return;
-                }
-
-                target = e.target.closest('.delete-btn');
-                if (target) {
-                    var id = target.getAttribute('data-id');
-                    deleteTodo(id);
-                }
-            });
-
-            // 初始化应用
-            init();
+        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTodo();
         });
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        // 事件委托处理 todo 操作
+        document.getElementById('todoList').addEventListener('click', function(e) {
+            var target = e.target.closest('.checkbox');
+            if (target) {
+                var id = target.getAttribute('data-id');
+                var completed = target.getAttribute('data-completed') === 'true';
+                toggleTodo(id, completed);
+                return;
+            }
+
+            target = e.target.closest('.delete-btn');
+            if (target) {
+                var id = target.getAttribute('data-id');
+                deleteTodo(id);
+            }
+        });
+
+        // 初始化应用
+        init();
     </script>
 </body>
 </html>
