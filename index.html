@@ -554,7 +554,11 @@
             btn.textContent = '登录';
 
             if (error) {
-                showMessage('登录失败：' + error.message, 'error');
+                if (error.message.includes('Invalid login credentials')) {
+                    showMessage('用户不存在或密码错误，请先注册账号', 'error');
+                } else {
+                    showMessage('登录失败：' + error.message, 'error');
+                }
             }
         }
 
