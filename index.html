@@ -428,7 +428,16 @@
                 <input type="email" class="auth-input" id="emailInput" placeholder="输入邮箱地址">
                 <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码">
                 <button class="auth-btn" id="loginBtn" onclick="handleLogin()">登录</button>
+                <div class="auth-divider">
+                    <span class="auth-link" onclick="showForgotPassword()">忘记密码？</span>
+                </div>
                 <div class="auth-divider">还没有账号？<span class="auth-link" onclick="showRegister()">注册</span></div>
+            </div>
+
+            <div id="forgotPasswordForm" style="display:none;">
+                <input type="email" class="auth-input" id="resetEmailInput" placeholder="输入注册时的邮箱地址">
+                <button class="auth-btn" id="resetBtn" onclick="handleResetPassword()">发送重置链接</button>
+                <div class="auth-divider">想起密码了？<span class="auth-link" onclick="showLogin()">返回登录</span></div>
             </div>
 
             <div id="registerForm" style="display:none;">
@@ -515,12 +524,21 @@
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
             clearMessage();
         }
 
         function showRegister() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            clearMessage();
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
             clearMessage();
         }
 
@@ -590,6 +608,32 @@
             } else {
                 showMessage('注册成功！请查收验证邮件后登录', 'success');
                 showLogin();
+            }
+        }
+
+        async function handleResetPassword() {
+            const email = document.getElementById('resetEmailInput').value.trim();
+
+            if (!email) {
+                showMessage('请输入邮箱地址', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('resetBtn');
+            btn.disabled = true;
+            btn.textContent = '发送中...';
+
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname
+            });
+
+            btn.disabled = false;
+            btn.textContent = '发送重置链接';
+
+            if (error) {
+                showMessage('发送失败：' + error.message, 'error');
+            } else {
+                showMessage('重置链接已发送到您的邮箱，请查收', 'success');
             }
         }
 
