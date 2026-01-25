@@ -413,6 +413,12 @@
                 <button class="auth-btn" id="registerBtn">注册</button>
                 <div class="auth-divider">已有账号？<span class="auth-link" id="loginLink">登录</span></div>
             </div>
+
+            <div id="resetPasswordForm" style="display:none;">
+                <input type="password" class="auth-input" id="newPasswordInput" placeholder="输入新密码（至少6位）">
+                <input type="password" class="auth-input" id="confirmPasswordInput" placeholder="确认新密码">
+                <button class="auth-btn" id="setPasswordBtn">设置新密码</button>
+            </div>
         </div>
 
         <div class="app-container" id="appContainer">
@@ -458,6 +464,7 @@
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
             clearMessage();
         }
 
@@ -465,6 +472,7 @@
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'block';
             document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
             clearMessage();
         }
 
@@ -472,6 +480,15 @@
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            clearMessage();
+        }
+
+        function showResetPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
             clearMessage();
         }
 
@@ -522,22 +539,48 @@
             if (!supabase) return;
 
             try {
+                // 检测 URL 中是否有重置密码的参数
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const type = hashParams.get('type');
+
+                if (type === 'recovery') {
+                    // 显示重置密码界面
+                    showResetPassword();
+                    showMessage('请设置您的新密码', 'success');
+                }
+
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     currentUser = session.user;
                     document.getElementById('userEmail').textContent = currentUser.email;
-                    showApp();
-                    loadTodos();
-                    subscribeToChanges();
-                }
 
-                supabase.auth.onAuthStateChange((event, session) => {
-                    if (session) {
-                        currentUser = session.user;
-                        document.getElementById('userEmail').textContent = currentUser.email;
+                    // 如果是重置密码流程，不要跳转到主界面
+                    if (type !== 'recovery') {
                         showApp();
                         loadTodos();
                         subscribeToChanges();
+                    }
+                }
+
+                supabase.auth.onAuthStateChange((event, session) => {
+                    // 如果是密码恢复事件，显示重置密码界面
+                    if (event === 'PASSWORD_RECOVERY') {
+                        showResetPassword();
+                        showMessage('请设置您的新密码', 'success');
+                        return;
+                    }
+
+                    if (session) {
+                        currentUser = session.user;
+                        document.getElementById('userEmail').textContent = currentUser.email;
+
+                        // 如果不是重置密码流程，显示主界面
+                        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                        if (hashParams.get('type') !== 'recovery') {
+                            showApp();
+                            loadTodos();
+                            subscribeToChanges();
+                        }
                     } else {
                         currentUser = null;
                         showAuth();
@@ -665,6 +708,54 @@
                 btn.disabled = false;
                 btn.textContent = '发送重置链接';
                 showMessage('发送失败：' + e.message, 'error');
+            }
+        }
+
+        async function handleSetNewPassword() {
+            if (!supabase) {
+                showMessage('网络连接失败，请刷新页面重试', 'error');
+                return;
+            }
+
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+            if (!newPassword || !confirmPassword) {
+                showMessage('请输入新密码', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('setPasswordBtn');
+            btn.disabled = true;
+            btn.textContent = '设置中...';
+
+            try {
+                const { error } = await supabase.auth.updateUser({ password: newPassword });
+                btn.disabled = false;
+                btn.textContent = '设置新密码';
+
+                if (error) {
+                    showMessage('设置失败：' + error.message, 'error');
+                } else {
+                    showMessage('密码设置成功！', 'success');
+                    // 清除 URL 中的 hash
+                    window.history.replaceState(null, '', window.location.pathname);
+                    showLogin();
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = '设置新密码';
+                showMessage('设置失败：' + e.message, 'error');
             }
         }
 
@@ -828,6 +919,7 @@
         document.getElementById('loginBtn').addEventListener('click', handleLogin);
         document.getElementById('registerBtn').addEventListener('click', handleRegister);
         document.getElementById('resetBtn').addEventListener('click', handleResetPassword);
+        document.getElementById('setPasswordBtn').addEventListener('click', handleSetNewPassword);
         document.getElementById('logoutBtn').addEventListener('click', handleLogout);
         document.getElementById('addBtn').addEventListener('click', addTodo);
 
