@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -37,6 +37,8 @@
             padding: 40px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             text-align: center;
+            max-width: 400px;
+            margin: 0 auto;
         }
 
         .auth-container h2 {
@@ -152,21 +154,29 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         #todoInput {
             flex: 1;
+            min-width: 200px;
             padding: 15px 20px;
             border: none;
             border-radius: 10px;
             font-size: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             outline: none;
-            transition: box-shadow 0.3s;
         }
 
-        #todoInput:focus {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        .input-select {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            outline: none;
         }
 
         #addBtn {
@@ -184,7 +194,6 @@
         #addBtn:hover {
             background: #45a049;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
         #addBtn:disabled {
@@ -203,9 +212,24 @@
         .todo-item {
             display: flex;
             align-items: center;
-            padding: 18px 20px;
+            padding: 15px 20px;
             border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.2s;
+            cursor: grab;
+            gap: 10px;
+        }
+
+        .todo-item:active {
+            cursor: grabbing;
+        }
+
+        .todo-item.dragging {
+            opacity: 0.5;
+            background: #f0f0f0;
+        }
+
+        .todo-item.drag-over {
+            border-top: 3px solid #667eea;
         }
 
         .todo-item:last-child {
@@ -216,54 +240,76 @@
             background: #f9f9f9;
         }
 
-        .todo-item.completed .todo-text {
-            text-decoration: line-through;
-            color: #999;
+        .drag-handle {
+            color: #ccc;
+            cursor: grab;
+            padding: 5px;
+            font-size: 16px;
         }
 
-        .checkbox {
-            width: 24px;
-            height: 24px;
-            border: 2px solid #ddd;
-            border-radius: 50%;
-            margin-right: 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            flex-shrink: 0;
+        .drag-handle:active {
+            cursor: grabbing;
         }
 
-        .checkbox:hover {
-            border-color: #667eea;
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 35px;
+            text-align: center;
         }
 
-        .todo-item.completed .checkbox {
-            background: #4CAF50;
-            border-color: #4CAF50;
+        .priority-P0 {
+            background: #ff4444;
+            color: white;
         }
 
-        .checkbox::after {
-            content: '';
-            width: 6px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-            opacity: 0;
-            transition: opacity 0.2s;
+        .priority-P1 {
+            background: #ff8800;
+            color: white;
         }
 
-        .todo-item.completed .checkbox::after {
-            opacity: 1;
+        .priority-P2 {
+            background: #ffcc00;
+            color: #333;
+        }
+
+        .priority-P3 {
+            background: #88cc00;
+            color: white;
         }
 
         .todo-text {
             flex: 1;
-            font-size: 16px;
+            font-size: 15px;
             color: #333;
             word-break: break-word;
+            min-width: 100px;
+        }
+
+        .status-select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .status-select:focus {
+            border-color: #667eea;
+        }
+
+        .priority-select-small {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            background: white;
+            cursor: pointer;
+            outline: none;
         }
 
         .delete-btn {
@@ -327,15 +373,16 @@
         .stats {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             margin-top: 20px;
             color: white;
-            font-size: 14px;
+            font-size: 13px;
+            flex-wrap: wrap;
         }
 
         .stats span {
             background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 20px;
         }
 
@@ -370,15 +417,28 @@
             50% { opacity: 0.5; }
         }
 
-        @media (max-width: 480px) {
+        /* 状态颜色 */
+        .status-未开始 { color: #999; }
+        .status-进行中 { color: #2196F3; }
+        .status-已完成 { color: #4CAF50; }
+        .status-暂停 { color: #ff9800; }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        @media (max-width: 600px) {
             body { padding: 15px; }
             h1 { font-size: 1.5rem; margin-bottom: 20px; }
             .input-section { flex-direction: column; }
             #addBtn { width: 100%; }
+            .todo-item { flex-wrap: wrap; padding: 12px 15px; }
             .delete-btn { opacity: 1; }
-            .todo-item { padding: 15px; }
             .auth-container { padding: 25px; }
             .user-bar { flex-direction: column; gap: 10px; text-align: center; }
+            .todo-text { width: 100%; order: -1; margin-bottom: 8px; }
+            .drag-handle { display: none; }
         }
     </style>
 </head>
@@ -429,6 +489,12 @@
 
             <div class="input-section">
                 <input type="text" id="todoInput" placeholder="添加新的待办事项...">
+                <select class="input-select" id="priorityInput">
+                    <option value="P0">P0 紧急</option>
+                    <option value="P1">P1 高</option>
+                    <option value="P2" selected>P2 中</option>
+                    <option value="P3">P3 低</option>
+                </select>
                 <button id="addBtn">添加</button>
             </div>
 
@@ -451,13 +517,13 @@
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-        // Supabase 配置
         const SUPABASE_URL = 'https://bsnyzpisrsywktjuzygf.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnl6cGlzcnN5d2t0anV6eWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjMwMDMsImV4cCI6MjA4NDg5OTAwM30.WGIbauKKzX0RBw43LP_c7qxNUqDYTEYGB5XZBXbe4Y4';
 
         let supabase = null;
         let currentUser = null;
         let todos = [];
+        let draggedItem = null;
 
         // UI 函数
         function showLogin() {
@@ -539,12 +605,10 @@
             if (!supabase) return;
 
             try {
-                // 检测 URL 中是否有重置密码的参数
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const type = hashParams.get('type');
 
                 if (type === 'recovery') {
-                    // 显示重置密码界面
                     showResetPassword();
                     showMessage('请设置您的新密码', 'success');
                 }
@@ -554,7 +618,6 @@
                     currentUser = session.user;
                     document.getElementById('userEmail').textContent = currentUser.email;
 
-                    // 如果是重置密码流程，不要跳转到主界面
                     if (type !== 'recovery') {
                         showApp();
                         loadTodos();
@@ -563,7 +626,6 @@
                 }
 
                 supabase.auth.onAuthStateChange((event, session) => {
-                    // 如果是密码恢复事件，显示重置密码界面
                     if (event === 'PASSWORD_RECOVERY') {
                         showResetPassword();
                         showMessage('请设置您的新密码', 'success');
@@ -574,7 +636,6 @@
                         currentUser = session.user;
                         document.getElementById('userEmail').textContent = currentUser.email;
 
-                        // 如果不是重置密码流程，显示主界面
                         const hashParams = new URLSearchParams(window.location.hash.substring(1));
                         if (hashParams.get('type') !== 'recovery') {
                             showApp();
@@ -752,7 +813,6 @@
                     showMessage('设置失败：' + error.message, 'error');
                 } else {
                     showMessage('密码设置成功！', 'success');
-                    // 清除 URL 中的 hash
                     window.history.replaceState(null, '', window.location.pathname);
                     showLogin();
                 }
@@ -777,7 +837,7 @@
                     .from('todos')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false });
+                    .order('sort_order', { ascending: true });
 
                 if (error) {
                     console.error('加载失败:', error);
@@ -824,9 +884,24 @@
             }
 
             todoList.innerHTML = todos.map(todo => `
-                <div class="todo-item ${todo.completed ? 'completed' : ''}">
-                    <div class="checkbox" data-id="${todo.id}" data-completed="${!todo.completed}"></div>
+                <div class="todo-item ${todo.status === '已完成' ? 'completed' : ''}"
+                     data-id="${todo.id}"
+                     draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="priority-badge priority-${todo.priority || 'P2'}">${todo.priority || 'P2'}</span>
                     <span class="todo-text">${escapeHtml(todo.text)}</span>
+                    <select class="status-select" data-id="${todo.id}">
+                        <option value="未开始" ${todo.status === '未开始' ? 'selected' : ''}>未开始</option>
+                        <option value="进行中" ${todo.status === '进行中' ? 'selected' : ''}>进行中</option>
+                        <option value="已完成" ${todo.status === '已完成' ? 'selected' : ''}>已完成</option>
+                        <option value="暂停" ${todo.status === '暂停' ? 'selected' : ''}>暂停</option>
+                    </select>
+                    <select class="priority-select-small" data-id="${todo.id}">
+                        <option value="P0" ${todo.priority === 'P0' ? 'selected' : ''}>P0</option>
+                        <option value="P1" ${todo.priority === 'P1' ? 'selected' : ''}>P1</option>
+                        <option value="P2" ${todo.priority === 'P2' || !todo.priority ? 'selected' : ''}>P2</option>
+                        <option value="P3" ${todo.priority === 'P3' ? 'selected' : ''}>P3</option>
+                    </select>
                     <button class="delete-btn" data-id="${todo.id}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
@@ -835,30 +910,122 @@
                 </div>
             `).join('');
 
-            const completed = todos.filter(t => t.completed).length;
+            // 统计
             const total = todos.length;
+            const completed = todos.filter(t => t.status === '已完成').length;
+            const inProgress = todos.filter(t => t.status === '进行中').length;
+            const p0Count = todos.filter(t => t.priority === 'P0' && t.status !== '已完成').length;
+
             stats.innerHTML = `
                 <span>总计: ${total}</span>
+                <span>进行中: ${inProgress}</span>
                 <span>已完成: ${completed}</span>
-                <span>未完成: ${total - completed}</span>
+                ${p0Count > 0 ? `<span style="background:rgba(255,68,68,0.8)">紧急: ${p0Count}</span>` : ''}
             `;
+
+            // 绑定拖拽事件
+            setupDragAndDrop();
+        }
+
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('.todo-item[draggable="true"]');
+
+            items.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.todo-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (this !== draggedItem) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (draggedItem === this) return;
+
+            const draggedId = draggedItem.dataset.id;
+            const targetId = this.dataset.id;
+
+            const draggedIndex = todos.findIndex(t => t.id === draggedId);
+            const targetIndex = todos.findIndex(t => t.id === targetId);
+
+            if (draggedIndex === -1 || targetIndex === -1) return;
+
+            // 重新排序
+            const [removed] = todos.splice(draggedIndex, 1);
+            todos.splice(targetIndex, 0, removed);
+
+            // 更新排序值
+            const updates = todos.map((todo, index) => ({
+                id: todo.id,
+                sort_order: index
+            }));
+
+            renderTodos();
+
+            // 保存到数据库
+            for (const update of updates) {
+                await supabase
+                    .from('todos')
+                    .update({ sort_order: update.sort_order })
+                    .eq('id', update.id);
+            }
         }
 
         async function addTodo() {
             if (!supabase || !currentUser) return;
 
             const input = document.getElementById('todoInput');
+            const prioritySelect = document.getElementById('priorityInput');
             const text = input.value.trim();
+            const priority = prioritySelect.value;
             const btn = document.getElementById('addBtn');
 
             if (!text) return;
 
             btn.disabled = true;
 
+            // 获取最小的 sort_order
+            const minOrder = todos.length > 0 ? Math.min(...todos.map(t => t.sort_order || 0)) - 1 : 0;
+
             try {
                 const { error } = await supabase
                     .from('todos')
-                    .insert([{ text, user_id: currentUser.id }]);
+                    .insert([{
+                        text,
+                        user_id: currentUser.id,
+                        priority,
+                        status: '未开始',
+                        sort_order: minOrder
+                    }]);
 
                 btn.disabled = false;
 
@@ -875,13 +1042,33 @@
             }
         }
 
-        async function toggleTodo(id, completed) {
+        async function updateTodoStatus(id, status) {
             if (!supabase) return;
 
             try {
                 const { error } = await supabase
                     .from('todos')
-                    .update({ completed })
+                    .update({ status })
+                    .eq('id', id);
+
+                if (error) {
+                    alert('更新失败: ' + error.message);
+                    return;
+                }
+
+                loadTodos();
+            } catch (e) {
+                alert('更新失败: ' + e.message);
+            }
+        }
+
+        async function updateTodoPriority(id, priority) {
+            if (!supabase) return;
+
+            try {
+                const { error } = await supabase
+                    .from('todos')
+                    .update({ priority })
                     .eq('id', id);
 
                 if (error) {
@@ -936,17 +1123,18 @@
         });
 
         document.getElementById('todoList').addEventListener('click', (e) => {
-            const checkbox = e.target.closest('.checkbox');
-            if (checkbox) {
-                const id = checkbox.dataset.id;
-                const completed = checkbox.dataset.completed === 'true';
-                toggleTodo(id, completed);
-                return;
-            }
-
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) {
                 deleteTodo(deleteBtn.dataset.id);
+            }
+        });
+
+        document.getElementById('todoList').addEventListener('change', (e) => {
+            if (e.target.classList.contains('status-select')) {
+                updateTodoStatus(e.target.dataset.id, e.target.value);
+            }
+            if (e.target.classList.contains('priority-select-small')) {
+                updateTodoPriority(e.target.dataset.id, e.target.value);
             }
         });
 
