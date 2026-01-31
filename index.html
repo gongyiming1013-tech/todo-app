@@ -224,8 +224,13 @@
         }
 
         .todo-item.dragging {
-            opacity: 0.5;
+            opacity: 0.4;
             background: #f0f0f0;
+        }
+
+        .touch-dragging {
+            border-radius: 10px;
+            background: white;
         }
 
         .todo-item.drag-over {
@@ -566,7 +571,7 @@
             .auth-container { padding: 25px; }
             .user-bar { flex-direction: column; gap: 10px; text-align: center; }
             .todo-text { width: 100%; order: -1; margin-bottom: 8px; }
-            .drag-handle { display: none; }
+            .drag-handle { display: block; font-size: 18px; padding: 4px; }
         }
     </style>
 </head>
@@ -1074,14 +1079,22 @@
             const items = document.querySelectorAll('.todo-item[draggable="true"]');
 
             items.forEach(item => {
+                // 桌面拖拽
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
                 item.addEventListener('dragover', handleDragOver);
                 item.addEventListener('drop', handleDrop);
                 item.addEventListener('dragleave', handleDragLeave);
+
+                // 手机触摸拖拽（通过拖拽手柄触发）
+                const handle = item.querySelector('.drag-handle');
+                if (handle) {
+                    handle.addEventListener('touchstart', handleTouchStart, { passive: false });
+                }
             });
         }
 
+        // === 桌面拖拽 ===
         function handleDragStart(e) {
             draggedItem = this;
             this.classList.add('dragging');
@@ -1117,16 +1130,99 @@
             const draggedId = draggedItem.dataset.id;
             const targetId = this.dataset.id;
 
+            await reorderTodos(draggedId, targetId);
+        }
+
+        // === 手机触摸拖拽 ===
+        let touchDragEl = null;
+        let touchClone = null;
+        let touchStartY = 0;
+
+        function handleTouchStart(e) {
+            const item = this.closest('.todo-item');
+            if (!item) return;
+
+            e.preventDefault();
+            touchDragEl = item;
+            touchStartY = e.touches[0].clientY;
+
+            // 创建拖拽中的克隆元素
+            touchClone = item.cloneNode(true);
+            touchClone.classList.add('touch-dragging');
+            touchClone.style.position = 'fixed';
+            touchClone.style.left = item.getBoundingClientRect().left + 'px';
+            touchClone.style.top = item.getBoundingClientRect().top + 'px';
+            touchClone.style.width = item.getBoundingClientRect().width + 'px';
+            touchClone.style.zIndex = '1000';
+            touchClone.style.opacity = '0.85';
+            touchClone.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
+            touchClone.style.pointerEvents = 'none';
+            document.body.appendChild(touchClone);
+
+            item.classList.add('dragging');
+
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+        }
+
+        function handleTouchMove(e) {
+            if (!touchDragEl || !touchClone) return;
+            e.preventDefault();
+
+            const touchY = e.touches[0].clientY;
+            const rect = touchDragEl.getBoundingClientRect();
+            touchClone.style.top = (rect.top + (touchY - touchStartY)) + 'px';
+            touchStartY = touchY;
+
+            // 找到鼠标下方的目标元素
+            touchClone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(e.touches[0].clientX, touchY);
+            touchClone.style.display = '';
+
+            // 清除所有高亮
+            document.querySelectorAll('.todo-item').forEach(item => item.classList.remove('drag-over'));
+
+            if (elementBelow) {
+                const targetItem = elementBelow.closest('.todo-item');
+                if (targetItem && targetItem !== touchDragEl) {
+                    targetItem.classList.add('drag-over');
+                }
+            }
+        }
+
+        async function handleTouchEnd(e) {
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+
+            if (touchClone) {
+                touchClone.remove();
+                touchClone = null;
+            }
+
+            if (!touchDragEl) return;
+            touchDragEl.classList.remove('dragging');
+
+            // 找到目标
+            const overItem = document.querySelector('.todo-item.drag-over');
+            document.querySelectorAll('.todo-item').forEach(item => item.classList.remove('drag-over'));
+
+            if (overItem && overItem !== touchDragEl) {
+                await reorderTodos(touchDragEl.dataset.id, overItem.dataset.id);
+            }
+
+            touchDragEl = null;
+        }
+
+        // === 共用的排序逻辑 ===
+        async function reorderTodos(draggedId, targetId) {
             const draggedIndex = todos.findIndex(t => t.id === draggedId);
             const targetIndex = todos.findIndex(t => t.id === targetId);
 
             if (draggedIndex === -1 || targetIndex === -1) return;
 
-            // 重新排序
             const [removed] = todos.splice(draggedIndex, 1);
             todos.splice(targetIndex, 0, removed);
 
-            // 更新排序值
             const updates = todos.map((todo, index) => ({
                 id: todo.id,
                 sort_order: index
@@ -1134,7 +1230,6 @@
 
             renderTodos();
 
-            // 保存到数据库
             for (const update of updates) {
                 await supabase
                     .from('todos')
