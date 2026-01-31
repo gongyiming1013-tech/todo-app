@@ -562,16 +562,106 @@
         }
 
         @media (max-width: 600px) {
-            body { padding: 15px; }
-            h1 { font-size: 1.5rem; margin-bottom: 20px; }
-            .input-section { flex-direction: column; }
+            body { padding: 10px; }
+            h1 { font-size: 1.5rem; margin-bottom: 15px; }
+            .input-section { flex-direction: column; gap: 8px; }
+            .input-section .upload-btn { width: 100%; }
             #addBtn { width: 100%; }
-            .todo-item { flex-wrap: wrap; padding: 12px 15px; }
-            .delete-btn { opacity: 1; }
             .auth-container { padding: 25px; }
             .user-bar { flex-direction: column; gap: 10px; text-align: center; }
-            .todo-text { width: 100%; order: -1; margin-bottom: 8px; }
-            .drag-handle { display: block; font-size: 18px; padding: 4px; }
+
+            /* 待办事项卡片：两行布局 */
+            .todo-item {
+                display: grid;
+                grid-template-columns: 28px 1fr auto;
+                grid-template-rows: auto auto;
+                gap: 6px 8px;
+                padding: 12px;
+                align-items: center;
+            }
+
+            /* 第一行：拖拽手柄 + 文字 + 删除按钮 */
+            .drag-handle {
+                display: block;
+                font-size: 18px;
+                padding: 4px;
+                grid-row: 1 / 3;
+                align-self: center;
+            }
+            .todo-text {
+                grid-column: 2;
+                grid-row: 1;
+                font-size: 14px;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .delete-btn {
+                grid-column: 3;
+                grid-row: 1 / 3;
+                opacity: 1;
+                width: 28px;
+                height: 28px;
+            }
+
+            /* 第二行：优先级 + 状态 + 图片缩略图 */
+            .priority-badge {
+                padding: 2px 6px;
+                font-size: 11px;
+                min-width: auto;
+            }
+            .status-select, .priority-select-small {
+                padding: 4px 6px;
+                font-size: 11px;
+            }
+            .todo-item > .priority-badge,
+            .todo-item > .status-select,
+            .todo-item > .priority-select-small,
+            .todo-item > .todo-image-thumb {
+                grid-column: 2;
+                grid-row: 2;
+            }
+
+            /* 第二行元素用 flex 排列 */
+            .todo-item::after {
+                content: none;
+            }
+            .todo-item {
+                grid-template-columns: 28px 1fr auto;
+                grid-template-rows: auto auto;
+            }
+
+            /* 把第二行的控件包在一起 - 用 flex 覆盖 grid */
+            .todo-item {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 10px 12px;
+            }
+            .drag-handle {
+                flex-shrink: 0;
+            }
+            .todo-text {
+                width: calc(100% - 70px);
+                order: 1;
+            }
+            .delete-btn {
+                order: 2;
+                flex-shrink: 0;
+            }
+            .todo-image-thumb {
+                order: 3;
+                width: 32px;
+                height: 32px;
+            }
+            .priority-badge { order: 4; }
+            .status-select { order: 5; }
+            .priority-select-small { order: 6; }
+            .source-text-indicator { display: none; }
+
+            /* 统计栏 */
+            .stats { flex-wrap: wrap; gap: 8px; }
+            .stats span { font-size: 12px; padding: 5px 10px; }
         }
     </style>
 </head>
