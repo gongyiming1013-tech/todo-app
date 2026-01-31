@@ -1136,7 +1136,7 @@
         // === 手机触摸拖拽 ===
         let touchDragEl = null;
         let touchClone = null;
-        let touchStartY = 0;
+        let touchOffsetY = 0;
 
         function handleTouchStart(e) {
             const item = this.closest('.todo-item');
@@ -1144,19 +1144,22 @@
 
             e.preventDefault();
             touchDragEl = item;
-            touchStartY = e.touches[0].clientY;
+
+            const rect = item.getBoundingClientRect();
+            touchOffsetY = e.touches[0].clientY - rect.top;
 
             // 创建拖拽中的克隆元素
             touchClone = item.cloneNode(true);
             touchClone.classList.add('touch-dragging');
             touchClone.style.position = 'fixed';
-            touchClone.style.left = item.getBoundingClientRect().left + 'px';
-            touchClone.style.top = item.getBoundingClientRect().top + 'px';
-            touchClone.style.width = item.getBoundingClientRect().width + 'px';
+            touchClone.style.left = rect.left + 'px';
+            touchClone.style.top = rect.top + 'px';
+            touchClone.style.width = rect.width + 'px';
             touchClone.style.zIndex = '1000';
             touchClone.style.opacity = '0.85';
             touchClone.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
             touchClone.style.pointerEvents = 'none';
+            touchClone.style.transition = 'none';
             document.body.appendChild(touchClone);
 
             item.classList.add('dragging');
@@ -1170,13 +1173,14 @@
             e.preventDefault();
 
             const touchY = e.touches[0].clientY;
-            const rect = touchDragEl.getBoundingClientRect();
-            touchClone.style.top = (rect.top + (touchY - touchStartY)) + 'px';
-            touchStartY = touchY;
+            const touchX = e.touches[0].clientX;
 
-            // 找到鼠标下方的目标元素
+            // 克隆元素跟随手指
+            touchClone.style.top = (touchY - touchOffsetY) + 'px';
+
+            // 找到手指下方的目标元素
             touchClone.style.display = 'none';
-            const elementBelow = document.elementFromPoint(e.touches[0].clientX, touchY);
+            const elementBelow = document.elementFromPoint(touchX, touchY);
             touchClone.style.display = '';
 
             // 清除所有高亮
