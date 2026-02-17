@@ -1,0 +1,593 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.auth-container {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.auth-container h2 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.auth-container p {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.auth-input:focus {
+    border-color: #667eea;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.auth-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.auth-divider {
+    margin: 20px 0;
+    color: #999;
+    font-size: 14px;
+}
+
+.auth-link {
+    color: #667eea;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.message {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: none;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.app-container {
+    display: none;
+}
+
+.user-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    color: white;
+    font-size: 14px;
+}
+
+.user-email {
+    opacity: 0.9;
+}
+
+.logout-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+#todoInput {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+.input-select {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    cursor: pointer;
+    outline: none;
+}
+
+#addBtn {
+    padding: 15px 25px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+#addBtn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+#addBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.todo-list {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.todo-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s, transform 0.2s;
+    cursor: grab;
+}
+
+.todo-row-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.todo-row-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding-left: 26px;
+}
+
+.todo-item:active {
+    cursor: grabbing;
+}
+
+.todo-item.dragging {
+    opacity: 0.4;
+    background: #f0f0f0;
+}
+
+.touch-dragging {
+    border-radius: 10px;
+    background: white;
+}
+
+.todo-item.drag-over {
+    border-top: 3px solid #667eea;
+}
+
+.todo-item:last-child {
+    border-bottom: none;
+}
+
+.todo-item:hover {
+    background: #f9f9f9;
+}
+
+.drag-handle {
+    color: #ccc;
+    cursor: grab;
+    padding: 5px;
+    font-size: 16px;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.priority-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+}
+
+.priority-P0 {
+    background: #ff4444;
+    color: white;
+}
+
+.priority-P1 {
+    background: #ff8800;
+    color: white;
+}
+
+.priority-P2 {
+    background: #ffcc00;
+    color: #333;
+}
+
+.priority-P3 {
+    background: #88cc00;
+    color: white;
+}
+
+.todo-text {
+    flex: 1;
+    font-size: 15px;
+    color: #333;
+    word-break: break-word;
+    min-width: 100px;
+}
+
+.status-select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    background: white;
+    cursor: pointer;
+    outline: none;
+}
+
+.status-select:focus {
+    border-color: #667eea;
+}
+
+.priority-select-small {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    background: white;
+    cursor: pointer;
+    outline: none;
+}
+
+.delete-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #ff5252;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.todo-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: #ff1744;
+    transform: scale(1.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f0f0f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    color: white;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+
+.stats span {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 14px;
+    border-radius: 20px;
+}
+
+.sync-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.sync-indicator.show {
+    display: flex;
+}
+
+.sync-dot {
+    width: 8px;
+    height: 8px;
+    background: #4CAF50;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 状态颜色 */
+.status-未开始 { color: #999; }
+.status-进行中 { color: #2196F3; }
+.status-已完成 { color: #4CAF50; }
+.status-暂停 { color: #ff9800; }
+
+.todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: #999;
+}
+
+/* 图片缩略图 */
+.todo-image-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.todo-image-thumb:hover {
+    transform: scale(1.1);
+}
+
+/* 图片预览弹窗 */
+.image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.image-modal.show {
+    display: flex;
+}
+
+.image-modal img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.image-modal-close:hover {
+    opacity: 1;
+}
+
+/* 上传按钮 */
+.upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: #667eea;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.upload-btn:hover {
+    background: #5a6fd6;
+    transform: translateY(-2px);
+}
+
+.upload-btn.has-image {
+    background: #4CAF50;
+}
+
+/* 图片预览条 */
+.image-preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.upload-preview-img {
+    height: 50px;
+    max-width: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.remove-image-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #ff5252;
+    color: white;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.remove-image-btn:hover {
+    background: #ff1744;
+}
+
+/* 来源文本提示 */
+.source-text-indicator {
+    font-size: 11px;
+    color: #999;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    cursor: help;
+}
+
+@media (max-width: 600px) {
+    body { padding: 10px; }
+    h1 { font-size: 1.5rem; margin-bottom: 15px; }
+    .input-section { flex-direction: column; gap: 8px; }
+    .input-section .upload-btn { width: 100%; flex-direction: row; gap: 6px; }
+    .input-section .upload-btn::after { content: '上传图片'; font-size: 14px; }
+    #addBtn { width: 100%; }
+    .auth-container { padding: 25px; }
+    .user-bar { flex-direction: column; gap: 10px; text-align: center; }
+
+    .todo-item { padding: 10px 12px; }
+
+    .todo-row-top { gap: 8px; }
+    .todo-row-bottom { padding-left: 0; margin-top: 8px; }
+
+    .drag-handle { display: block; font-size: 16px; padding: 4px; touch-action: none; }
+    .todo-text { font-size: 14px; }
+    .todo-image-thumb { width: 32px; height: 32px; }
+    .priority-badge { padding: 2px 6px; font-size: 11px; min-width: auto; }
+    .status-select, .priority-select-small { padding: 4px 6px; font-size: 12px; }
+    .delete-btn { opacity: 1; width: 28px; height: 28px; }
+    .source-text-indicator { display: none; }
+
+    .stats { flex-wrap: wrap; gap: 8px; }
+    .stats span { font-size: 12px; padding: 5px 10px; }
+}
