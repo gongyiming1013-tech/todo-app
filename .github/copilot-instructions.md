@@ -41,18 +41,26 @@ No build step. No install step.
 
 ## Testing
 
+### Structural tests (Python)
+
 ```bash
-# Run all tests
 python test_refactor.py
-
-# Run a single test class
-python -m unittest test_refactor.TestJSModules
-
-# Run a single test
-python -m unittest test_refactor.TestJSModules.test_app_imports_all_modules
+python -m unittest test_refactor.TestJSModules                          # single class
+python -m unittest test_refactor.TestJSModules.test_app_imports_all_modules  # single test
 ```
 
-Tests are structural validators (file existence, correct imports/exports, HTML integrity) — not runtime/behavioral tests.
+These validate file existence, correct imports/exports, and HTML integrity — not runtime behavior.
+
+### E2E tests (Playwright)
+
+```bash
+npm test                            # run all Playwright tests (auto-starts local server)
+npx playwright test tests/app.spec.js  # single file
+npx playwright test -g "login"      # by test name grep
+npm run test:ui                     # interactive UI mode
+```
+
+Playwright config is in `playwright.config.js`. Tests live in `tests/`. The web server (`npx serve .`) starts automatically on port 8080.
 
 ## Deploying the worker proxy
 

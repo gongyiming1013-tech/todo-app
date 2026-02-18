@@ -5,112 +5,135 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    background: #f2f2f7;
     min-height: 100vh;
     padding: 20px;
+    color: #1c1c1e;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 860px;
     margin: 0 auto;
 }
 
 h1 {
-    color: white;
+    color: #1c1c1e;
     text-align: center;
     margin-bottom: 30px;
-    font-size: 2rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
+/* Auth */
+
 .auth-container {
-    background: white;
-    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
     text-align: center;
     max-width: 400px;
     margin: 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .auth-container h2 {
     margin-bottom: 10px;
-    color: #333;
+    color: #1c1c1e;
+    font-weight: 700;
+    font-size: 1.4rem;
 }
 
 .auth-container p {
-    color: #666;
+    color: #8e8e93;
     margin-bottom: 25px;
 }
 
 .auth-input {
     width: 100%;
     padding: 15px 20px;
-    border: 2px solid #eee;
-    border-radius: 10px;
+    border: none;
+    border-radius: 12px;
     font-size: 16px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     outline: none;
-    transition: border-color 0.3s;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    transition: box-shadow 0.2s;
 }
 
 .auth-input:focus {
-    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
 }
 
 .auth-btn {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #007AFF;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 .auth-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+.auth-btn:active {
+    transform: scale(0.98);
 }
 
 .auth-btn:disabled {
-    opacity: 0.7;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
 
 .auth-divider {
     margin: 20px 0;
-    color: #999;
+    color: #8e8e93;
     font-size: 14px;
 }
 
 .auth-link {
-    color: #667eea;
+    color: #007AFF;
     cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-link:hover {
     text-decoration: underline;
 }
 
 .message {
-    padding: 12px;
-    border-radius: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
     margin-bottom: 15px;
     font-size: 14px;
     display: none;
 }
 
 .message.success {
-    background: #d4edda;
-    color: #155724;
+    background: rgba(52, 199, 89, 0.12);
+    color: #248a3d;
 }
 
 .message.error {
-    background: #f8d7da;
-    color: #721c24;
+    background: rgba(255, 59, 48, 0.12);
+    color: #d70015;
 }
+
+/* App */
 
 .app-container {
     display: none;
@@ -121,90 +144,132 @@ h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    color: white;
+    color: #1c1c1e;
     font-size: 14px;
 }
 
 .user-email {
-    opacity: 0.9;
+    color: #8e8e93;
+    font-weight: 500;
 }
 
 .logout-btn {
-    background: rgba(255,255,255,0.2);
+    background: rgba(0, 0, 0, 0.05);
     border: none;
-    color: white;
+    color: #8e8e93;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
-    transition: background 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
 }
 
 .logout-btn:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(0, 0, 0, 0.08);
+    color: #1c1c1e;
 }
+
+/* Input section */
 
 .input-section {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 #todoInput {
     flex: 1;
     min-width: 200px;
-    padding: 15px 20px;
+    padding: 12px 16px;
     border: none;
     border-radius: 10px;
     font-size: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    background: #f2f2f7;
+    color: #1c1c1e;
     outline: none;
+    transition: box-shadow 0.2s;
+}
+
+#todoInput:focus {
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+#todoInput::placeholder {
+    color: #c7c7cc;
 }
 
 .input-select {
-    padding: 15px;
+    padding: 12px 14px;
     border: none;
     border-radius: 10px;
     font-size: 14px;
-    background: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    background: #f2f2f7;
+    color: #1c1c1e;
     cursor: pointer;
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238e8e93'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 30px;
+}
+
+.input-select:focus {
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
 
 #addBtn {
-    padding: 15px 25px;
-    background: #4CAF50;
+    padding: 12px 24px;
+    background: #007AFF;
     color: white;
     border: none;
     border-radius: 10px;
     font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 #addBtn:hover {
-    background: #45a049;
-    transform: translateY(-2px);
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+#addBtn:active {
+    transform: scale(0.97);
 }
 
 #addBtn:disabled {
-    opacity: 0.7;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
 
+/* Todo list */
+
 .todo-list {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .todo-item {
-    padding: 12px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e5ea;
     transition: background 0.2s, transform 0.2s;
     cursor: grab;
 }
@@ -219,7 +284,7 @@ h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 6px;
+    margin-top: 8px;
     padding-left: 26px;
 }
 
@@ -229,16 +294,17 @@ h1 {
 
 .todo-item.dragging {
     opacity: 0.4;
-    background: #f0f0f0;
+    background: #f2f2f7;
 }
 
 .touch-dragging {
-    border-radius: 10px;
-    background: white;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .todo-item.drag-over {
-    border-top: 3px solid #667eea;
+    border-top: 3px solid #007AFF;
 }
 
 .todo-item:last-child {
@@ -246,11 +312,11 @@ h1 {
 }
 
 .todo-item:hover {
-    background: #f9f9f9;
+    background: rgba(0, 0, 0, 0.02);
 }
 
 .drag-handle {
-    color: #ccc;
+    color: #c7c7cc;
     cursor: grab;
     padding: 5px;
     font-size: 16px;
@@ -260,77 +326,130 @@ h1 {
     cursor: grabbing;
 }
 
+/* Priority badges */
+
 .priority-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 600;
     min-width: 35px;
     text-align: center;
 }
 
 .priority-P0 {
-    background: #ff4444;
-    color: white;
+    background: rgba(255, 59, 48, 0.15);
+    color: #FF3B30;
 }
 
 .priority-P1 {
-    background: #ff8800;
-    color: white;
+    background: rgba(255, 149, 0, 0.15);
+    color: #cc7700;
 }
 
 .priority-P2 {
-    background: #ffcc00;
-    color: #333;
+    background: rgba(255, 204, 0, 0.18);
+    color: #99850a;
 }
 
 .priority-P3 {
-    background: #88cc00;
-    color: white;
+    background: rgba(52, 199, 89, 0.15);
+    color: #248a3d;
 }
 
 .todo-text {
     flex: 1;
     font-size: 15px;
-    color: #333;
+    color: #1c1c1e;
     word-break: break-word;
     min-width: 100px;
 }
 
+/* Selects in todo items */
+
 .status-select {
     padding: 6px 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: none;
+    border-radius: 8px;
     font-size: 12px;
-    background: white;
+    background: #f2f2f7;
+    color: #1c1c1e;
     cursor: pointer;
     outline: none;
+    transition: box-shadow 0.2s;
 }
 
 .status-select:focus {
-    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
 }
 
 .priority-select-small {
     padding: 6px 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: none;
+    border-radius: 8px;
     font-size: 12px;
-    background: white;
+    background: #f2f2f7;
+    color: #1c1c1e;
     cursor: pointer;
     outline: none;
+    transition: box-shadow 0.2s;
 }
+
+.priority-select-small:focus {
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+}
+
+/* ETA date input */
+.eta-input {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    cursor: pointer;
+    outline: none;
+    transition: box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.eta-input:focus {
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+}
+
+/* ETA badge in todo items */
+.eta-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+    white-space: nowrap;
+}
+
+.eta-badge.eta-tba {
+    background: rgba(142, 142, 147, 0.12);
+    color: #8e8e93;
+}
+
+.eta-badge.eta-overdue {
+    background: rgba(255, 59, 48, 0.12);
+    color: #FF3B30;
+}
+
+/* Delete button */
 
 .delete-btn {
     width: 32px;
     height: 32px;
     border: none;
-    background: #ff5252;
-    color: white;
-    border-radius: 8px;
+    background: rgba(255, 59, 48, 0.12);
+    color: #FF3B30;
+    border-radius: 10px;
     cursor: pointer;
     opacity: 0;
-    transition: all 0.3s;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -342,34 +461,37 @@ h1 {
 }
 
 .delete-btn:hover {
-    background: #ff1744;
-    transform: scale(1.1);
+    background: #FF3B30;
+    color: white;
+    transform: scale(1.05);
 }
+
+/* Empty / loading states */
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #999;
+    color: #8e8e93;
 }
 
 .empty-state svg {
     width: 80px;
     height: 80px;
     margin-bottom: 20px;
-    opacity: 0.5;
+    opacity: 0.4;
 }
 
 .loading-state {
     text-align: center;
     padding: 40px 20px;
-    color: #999;
+    color: #8e8e93;
 }
 
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid #f0f0f0;
-    border-top-color: #667eea;
+    border: 3px solid #e5e5ea;
+    border-top-color: #007AFF;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 15px;
@@ -379,34 +501,47 @@ h1 {
     to { transform: rotate(360deg); }
 }
 
+/* Stats */
+
 .stats {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 10px;
     margin-top: 20px;
-    color: white;
     font-size: 13px;
     flex-wrap: wrap;
 }
 
 .stats span {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #1c1c1e;
     padding: 8px 14px;
     border-radius: 20px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
+
+/* Sync indicator */
 
 .sync-indicator {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: white;
+    background: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     padding: 10px 20px;
     border-radius: 25px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     font-size: 14px;
     display: none;
     align-items: center;
     gap: 8px;
+    color: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .sync-indicator.show {
@@ -416,7 +551,7 @@ h1 {
 .sync-dot {
     width: 8px;
     height: 8px;
-    background: #4CAF50;
+    background: #34C759;
     border-radius: 50%;
     animation: pulse 1s infinite;
 }
@@ -426,23 +561,23 @@ h1 {
     50% { opacity: 0.5; }
 }
 
-/* 状态颜色 */
-.status-未开始 { color: #999; }
-.status-进行中 { color: #2196F3; }
-.status-已完成 { color: #4CAF50; }
-.status-暂停 { color: #ff9800; }
+/* Status colors */
+.status-未开始 { color: #8e8e93; }
+.status-进行中 { color: #007AFF; }
+.status-已完成 { color: #34C759; }
+.status-暂停 { color: #FF9500; }
 
 .todo-item.completed .todo-text {
     text-decoration: line-through;
-    color: #999;
+    color: #8e8e93;
 }
 
-/* 图片缩略图 */
+/* Image thumbnails */
 .todo-image-thumb {
     width: 40px;
     height: 40px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: transform 0.2s;
     flex-shrink: 0;
@@ -452,7 +587,7 @@ h1 {
     transform: scale(1.1);
 }
 
-/* 图片预览弹窗 */
+/* Image modal */
 .image-modal {
     display: none;
     position: fixed;
@@ -460,11 +595,13 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.75);
     z-index: 1000;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 .image-modal.show {
@@ -475,7 +612,8 @@ h1 {
     max-width: 90%;
     max-height: 90%;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
 .image-modal-close {
@@ -486,61 +624,67 @@ h1 {
     font-size: 40px;
     cursor: pointer;
     opacity: 0.8;
+    transition: opacity 0.2s;
 }
 
 .image-modal-close:hover {
     opacity: 1;
 }
 
-/* 上传按钮 */
+/* Upload button */
 .upload-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48px;
     height: 48px;
-    background: #667eea;
-    color: white;
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+    border: none;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
     flex-shrink: 0;
 }
 
 .upload-btn:hover {
-    background: #5a6fd6;
-    transform: translateY(-2px);
+    background: rgba(0, 122, 255, 0.18);
+    transform: translateY(-1px);
 }
 
 .upload-btn.has-image {
-    background: #4CAF50;
+    background: rgba(52, 199, 89, 0.15);
+    color: #34C759;
 }
 
-/* 图片预览条 */
+/* Image preview bar */
 .image-preview-bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     padding: 8px 12px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .upload-preview-img {
     height: 50px;
     max-width: 200px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .remove-image-btn {
     width: 28px;
     height: 28px;
     border: none;
-    background: #ff5252;
-    color: white;
+    background: rgba(255, 59, 48, 0.12);
+    color: #FF3B30;
     border-radius: 50%;
     font-size: 18px;
     cursor: pointer;
@@ -548,46 +692,152 @@ h1 {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: background 0.2s;
 }
 
 .remove-image-btn:hover {
-    background: #ff1744;
+    background: #FF3B30;
+    color: white;
 }
 
-/* 来源文本提示 */
+/* Source text indicator */
 .source-text-indicator {
     font-size: 11px;
-    color: #999;
-    background: #f5f5f5;
-    padding: 2px 6px;
-    border-radius: 4px;
+    color: #8e8e93;
+    background: #f2f2f7;
+    padding: 2px 8px;
+    border-radius: 6px;
     margin-left: 4px;
     cursor: help;
 }
 
+/* Mobile */
 @media (max-width: 600px) {
-    body { padding: 10px; }
-    h1 { font-size: 1.5rem; margin-bottom: 15px; }
-    .input-section { flex-direction: column; gap: 8px; }
-    .input-section .upload-btn { width: 100%; flex-direction: row; gap: 6px; }
-    .input-section .upload-btn::after { content: '上传图片'; font-size: 14px; }
-    #addBtn { width: 100%; }
-    .auth-container { padding: 25px; }
-    .user-bar { flex-direction: column; gap: 10px; text-align: center; }
+    body {
+        padding: 10px;
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+    }
 
-    .todo-item { padding: 10px 12px; }
+    h1 {
+        font-size: 1.6rem;
+        margin-bottom: 16px;
+    }
 
-    .todo-row-top { gap: 8px; }
-    .todo-row-bottom { padding-left: 0; margin-top: 8px; }
+    .auth-container {
+        padding: 28px 20px;
+        border-radius: 16px;
+    }
 
-    .drag-handle { display: block; font-size: 16px; padding: 4px; touch-action: none; }
-    .todo-text { font-size: 14px; }
-    .todo-image-thumb { width: 32px; height: 32px; }
-    .priority-badge { padding: 2px 6px; font-size: 11px; min-width: auto; }
-    .status-select, .priority-select-small { padding: 4px 6px; font-size: 12px; }
-    .delete-btn { opacity: 1; width: 28px; height: 28px; }
-    .source-text-indicator { display: none; }
+    .input-section {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 14px;
+    }
 
-    .stats { flex-wrap: wrap; gap: 8px; }
-    .stats span { font-size: 12px; padding: 5px 10px; }
+    .input-section .upload-btn {
+        width: 100%;
+        height: 44px;
+        flex-direction: row;
+        gap: 6px;
+        border-radius: 10px;
+    }
+
+    .input-section .upload-btn::after {
+        content: '上传图片';
+        font-size: 14px;
+    }
+
+    #todoInput {
+        padding: 14px 16px;
+        min-height: 44px;
+    }
+
+    #addBtn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .user-bar {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .todo-item {
+        padding: 14px 16px;
+    }
+
+    .todo-row-top {
+        gap: 8px;
+    }
+
+    .todo-row-bottom {
+        padding-left: 0;
+        margin-top: 8px;
+    }
+
+    .drag-handle {
+        display: block;
+        font-size: 16px;
+        padding: 4px;
+        touch-action: none;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .todo-text {
+        font-size: 14px;
+    }
+
+    .todo-image-thumb {
+        width: 36px;
+        height: 36px;
+    }
+
+    .priority-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+        min-width: auto;
+    }
+
+    .status-select,
+    .priority-select-small,
+    .eta-input {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-height: 36px;
+    }
+
+    .delete-btn {
+        opacity: 1;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+
+    .source-text-indicator {
+        display: none;
+    }
+
+    .stats {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .stats span {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .sync-indicator {
+        bottom: max(12px, env(safe-area-inset-bottom));
+        right: max(12px, env(safe-area-inset-right));
+    }
 }
