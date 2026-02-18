@@ -1,73 +1,73 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#f2f2f7">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>待办清单</title>
+    <title>MeBoard</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>待办清单</h1>
+        <h1>MeBoard</h1>
 
         <div class="auth-container" id="authContainer">
-            <h2>欢迎使用</h2>
-            <p>登录后可在多设备间同步数据</p>
+            <h2>Welcome</h2>
+            <p>Sign in to sync your data across devices</p>
             <div id="authMessage" class="message"></div>
 
             <div id="loginForm">
-                <input type="email" class="auth-input" id="emailInput" placeholder="输入邮箱地址">
-                <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码">
-                <button class="auth-btn" id="loginBtn">登录</button>
+                <input type="email" class="auth-input" id="emailInput" placeholder="Email address">
+                <input type="password" class="auth-input" id="passwordInput" placeholder="Password">
+                <button class="auth-btn" id="loginBtn">Sign In</button>
                 <div class="auth-divider">
-                    <span class="auth-link" id="forgotLink">忘记密码？</span>
+                    <span class="auth-link" id="forgotLink">Forgot password?</span>
                 </div>
-                <div class="auth-divider">还没有账号？<span class="auth-link" id="registerLink">注册</span></div>
+                <div class="auth-divider">Don't have an account? <span class="auth-link" id="registerLink">Sign Up</span></div>
             </div>
 
             <div id="forgotPasswordForm" style="display:none;">
-                <input type="email" class="auth-input" id="resetEmailInput" placeholder="输入注册时的邮箱地址">
-                <button class="auth-btn" id="resetBtn">发送重置链接</button>
-                <div class="auth-divider">想起密码了？<span class="auth-link" id="backToLoginLink">返回登录</span></div>
+                <input type="email" class="auth-input" id="resetEmailInput" placeholder="Enter your registered email">
+                <button class="auth-btn" id="resetBtn">Send Reset Link</button>
+                <div class="auth-divider">Remember your password? <span class="auth-link" id="backToLoginLink">Back to Sign In</span></div>
             </div>
 
             <div id="registerForm" style="display:none;">
-                <input type="email" class="auth-input" id="regEmailInput" placeholder="输入邮箱地址">
-                <input type="password" class="auth-input" id="regPasswordInput" placeholder="设置密码（至少6位）">
-                <button class="auth-btn" id="registerBtn">注册</button>
-                <div class="auth-divider">已有账号？<span class="auth-link" id="loginLink">登录</span></div>
+                <input type="email" class="auth-input" id="regEmailInput" placeholder="Email address">
+                <input type="password" class="auth-input" id="regPasswordInput" placeholder="Password (at least 6 characters)">
+                <button class="auth-btn" id="registerBtn">Sign Up</button>
+                <div class="auth-divider">Already have an account? <span class="auth-link" id="loginLink">Sign In</span></div>
             </div>
 
             <div id="resetPasswordForm" style="display:none;">
-                <input type="password" class="auth-input" id="newPasswordInput" placeholder="输入新密码（至少6位）">
-                <input type="password" class="auth-input" id="confirmPasswordInput" placeholder="确认新密码">
-                <button class="auth-btn" id="setPasswordBtn">设置新密码</button>
+                <input type="password" class="auth-input" id="newPasswordInput" placeholder="New password (at least 6 characters)">
+                <input type="password" class="auth-input" id="confirmPasswordInput" placeholder="Confirm new password">
+                <button class="auth-btn" id="setPasswordBtn">Set New Password</button>
             </div>
         </div>
 
         <div class="app-container" id="appContainer">
             <div class="user-bar">
                 <span class="user-email" id="userEmail"></span>
-                <button class="logout-btn" id="logoutBtn">退出登录</button>
+                <button class="logout-btn" id="logoutBtn">Sign Out</button>
             </div>
 
             <div class="input-section">
-                <input type="text" id="todoInput" placeholder="添加新的待办事项...">
+                <input type="text" id="todoInput" placeholder="Add a new task...">
                 <select class="input-select" id="priorityInput">
-                    <option value="P0">P0 紧急</option>
-                    <option value="P1">P1 高</option>
-                    <option value="P2" selected>P2 中</option>
-                    <option value="P3">P3 低</option>
+                    <option value="P0">P0 Urgent</option>
+                    <option value="P1">P1 High</option>
+                    <option value="P2" selected>P2 Medium</option>
+                    <option value="P3">P3 Low</option>
                 </select>
-                <input type="date" class="eta-input" id="etaInput" title="预计完成日期">
-                <button type="button" class="upload-btn" id="uploadLabel" title="上传截图/图片" onclick="document.getElementById('imageInput').click()">
+                <input type="date" class="eta-input" id="etaInput" title="Expected completion date">
+                <button type="button" class="upload-btn" id="uploadLabel" title="Upload image" onclick="document.getElementById('imageInput').click()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </button>
                 <input type="file" id="imageInput" accept="image/*" style="display:none">
-                <button id="addBtn">添加</button>
+                <button id="addBtn">Add</button>
             </div>
             <div id="imagePreviewBar" class="image-preview-bar" style="display:none;">
                 <img id="uploadPreview" class="upload-preview-img">
@@ -77,7 +77,7 @@
             <div class="todo-list" id="todoList">
                 <div class="loading-state">
                     <div class="spinner"></div>
-                    <p>加载中...</p>
+                    <p>Loading...</p>
                 </div>
             </div>
 
@@ -87,13 +87,12 @@
 
     <div class="sync-indicator" id="syncIndicator">
         <div class="sync-dot"></div>
-        <span>同步中...</span>
+        <span>Syncing...</span>
     </div>
 
-    <!-- 图片预览弹窗 -->
     <div class="image-modal" id="imageModal">
         <span class="image-modal-close" id="imageModalClose">&times;</span>
-        <img id="imageModalImg" src="" alt="预览图片">
+        <img id="imageModalImg" src="" alt="Preview">
     </div>
 
     <script type="module" src="js/app.js"></script>

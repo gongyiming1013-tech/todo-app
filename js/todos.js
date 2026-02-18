@@ -18,8 +18,15 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+const STATUS_LABELS = {
+    '未开始': 'Not Started',
+    '进行中': 'In Progress',
+    '已完成': 'Done',
+    '暂停': 'Paused'
+};
+
 function formatEta(eta) {
-    if (!eta) return { text: 'TBA', cssClass: 'eta-tba', isOverdue: false };
+    if (!eta) return { text: 'ETA', cssClass: 'eta-tba', isOverdue: false };
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const etaDate = new Date(eta + 'T00:00:00');
@@ -51,14 +58,14 @@ export async function loadTodos() {
             .order('sort_order', { ascending: true });
 
         if (error) {
-            console.error('加载失败:', error);
+            console.error('Load failed:', error);
             return;
         }
 
         todos = data || [];
         renderTodos();
     } catch (e) {
-        console.error('加载失败:', e);
+        console.error('Load failed:', e);
     }
 }
 
@@ -88,8 +95,8 @@ export function renderTodos() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
-                <p>暂无待办事项</p>
-                <p style="font-size: 14px; margin-top: 8px;">添加一些任务开始吧</p>
+                <p>No tasks yet</p>
+                <p style="font-size: 14px; margin-top: 8px;">Add a task to get started</p>
             </div>`;
         stats.innerHTML = '';
         return;
@@ -105,7 +112,7 @@ export function renderTodos() {
             <div class="todo-row-top">
                 <span class="drag-handle">☰</span>
                 ${todo.image_url ? `<img src="${todo.image_url}" class="todo-image-thumb" onclick="showImageModal('${todo.image_url}')" alt="附件">` : ''}
-                <span class="todo-text">${escapeHtml(todo.text)}${todo.source_text ? `<span class="source-text-indicator" title="${escapeHtml(todo.source_text.substring(0, 200))}">文本</span>` : ''}</span>
+                <span class="todo-text">${escapeHtml(todo.text)}${todo.source_text ? `<span class="source-text-indicator" title="${escapeHtml(todo.source_text.substring(0, 200))}">Text</span>` : ''}</span>
                 <button class="delete-btn" data-id="${todo.id}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12"/>
@@ -114,20 +121,22 @@ export function renderTodos() {
             </div>
             <div class="todo-row-bottom">
                 <span class="priority-badge priority-${todo.priority || 'P2'}">${todo.priority || 'P2'}</span>
-                <select class="status-select" data-id="${todo.id}">
-                    <option value="未开始" ${todo.status === '未开始' ? 'selected' : ''}>未开始</option>
-                    <option value="进行中" ${todo.status === '进行中' ? 'selected' : ''}>进行中</option>
-                    <option value="已完成" ${todo.status === '已完成' ? 'selected' : ''}>已完成</option>
-                    <option value="暂停" ${todo.status === '暂停' ? 'selected' : ''}>暂停</option>
-                </select>
-                <select class="priority-select-small" data-id="${todo.id}">
-                    <option value="P0" ${todo.priority === 'P0' ? 'selected' : ''}>P0</option>
-                    <option value="P1" ${todo.priority === 'P1' ? 'selected' : ''}>P1</option>
-                    <option value="P2" ${todo.priority === 'P2' || !todo.priority ? 'selected' : ''}>P2</option>
-                    <option value="P3" ${todo.priority === 'P3' ? 'selected' : ''}>P3</option>
-                </select>
-                <span class="eta-badge ${etaCompleted ? 'eta-tba' : eta.cssClass}" title="预计完成日期">${etaCompleted ? eta.text : eta.text}</span>
-                <input type="date" class="eta-input" data-id="${todo.id}" value="${todo.eta || ''}" title="修改预计完成日期">
+                <div class="todo-controls">
+                    <select class="status-select" data-id="${todo.id}">
+                        <option value="未开始" ${todo.status === '未开始' ? 'selected' : ''}>Not Started</option>
+                        <option value="进行中" ${todo.status === '进行中' ? 'selected' : ''}>In Progress</option>
+                        <option value="已完成" ${todo.status === '已完成' ? 'selected' : ''}>Done</option>
+                        <option value="暂停" ${todo.status === '暂停' ? 'selected' : ''}>Paused</option>
+                    </select>
+                    <select class="priority-select-small" data-id="${todo.id}">
+                        <option value="P0" ${todo.priority === 'P0' ? 'selected' : ''}>P0</option>
+                        <option value="P1" ${todo.priority === 'P1' ? 'selected' : ''}>P1</option>
+                        <option value="P2" ${todo.priority === 'P2' || !todo.priority ? 'selected' : ''}>P2</option>
+                        <option value="P3" ${todo.priority === 'P3' ? 'selected' : ''}>P3</option>
+                    </select>
+                    <span class="eta-badge ${etaCompleted ? 'eta-tba' : eta.cssClass}" data-id="${todo.id}" title="点击选择日期">${etaCompleted ? eta.text : eta.text}</span>
+                    <input type="date" class="eta-input-hidden" data-id="${todo.id}" value="${todo.eta || ''}">
+                </div>
             </div>
         </div>`;
     }).join('');
@@ -139,10 +148,10 @@ export function renderTodos() {
     const p0Count = todos.filter(t => t.priority === 'P0' && t.status !== '已完成').length;
 
     stats.innerHTML = `
-        <span>总计: ${total}</span>
-        <span>进行中: ${inProgress}</span>
-        <span>已完成: ${completed}</span>
-        ${p0Count > 0 ? `<span style="background:rgba(255,68,68,0.8)">紧急: ${p0Count}</span>` : ''}
+        <span>Total: ${total}</span>
+        <span>In Progress: ${inProgress}</span>
+        <span>Done: ${completed}</span>
+        ${p0Count > 0 ? `<span style="background:rgba(255,68,68,0.8)">Urgent: ${p0Count}</span>` : ''}
     `;
 
     setupDragAndDrop();
@@ -187,7 +196,7 @@ export async function addTodo() {
         const { error } = await supabase
             .from('todos')
             .insert([{
-                text: text || '截图待办',
+                text: text || 'Screenshot task',
                 user_id: currentUser.id,
                 priority,
                 status: '未开始',
@@ -199,7 +208,7 @@ export async function addTodo() {
         btn.disabled = false;
 
         if (error) {
-            alert('添加失败: ' + error.message);
+            alert('Add failed: ' + error.message);
             return;
         }
 
@@ -209,7 +218,7 @@ export async function addTodo() {
         loadTodos();
     } catch (e) {
         btn.disabled = false;
-        alert('添加失败: ' + e.message);
+        alert('Add failed: ' + e.message);
     }
 }
 
@@ -223,13 +232,13 @@ export async function updateTodoStatus(id, status) {
             .eq('id', id);
 
         if (error) {
-            alert('更新失败: ' + error.message);
+            alert('Update failed: ' + error.message);
             return;
         }
 
         loadTodos();
     } catch (e) {
-        alert('更新失败: ' + e.message);
+        alert('Update failed: ' + e.message);
     }
 }
 
@@ -243,13 +252,13 @@ export async function updateTodoPriority(id, priority) {
             .eq('id', id);
 
         if (error) {
-            alert('更新失败: ' + error.message);
+            alert('Update failed: ' + error.message);
             return;
         }
 
         loadTodos();
     } catch (e) {
-        alert('更新失败: ' + e.message);
+        alert('Update failed: ' + e.message);
     }
 }
 
@@ -263,13 +272,13 @@ export async function deleteTodo(id) {
             .eq('id', id);
 
         if (error) {
-            alert('删除失败: ' + error.message);
+            alert('Delete failed: ' + error.message);
             return;
         }
 
         loadTodos();
     } catch (e) {
-        alert('删除失败: ' + e.message);
+        alert('Delete failed: ' + e.message);
     }
 }
 
@@ -283,12 +292,12 @@ export async function updateTodoEta(id, eta) {
             .eq('id', id);
 
         if (error) {
-            alert('更新失败: ' + error.message);
+            alert('Update failed: ' + error.message);
             return;
         }
 
         loadTodos();
     } catch (e) {
-        alert('更新失败: ' + e.message);
+        alert('Update failed: ' + e.message);
     }
 }

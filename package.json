@@ -1,0 +1,24 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "description": "一个支持多设备同步的待办事项管理应用，使用 Supabase 作为后端。",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gongyiming1013-tech/todo-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gongyiming1013-tech/todo-app/issues"
+  },
+  "homepage": "https://github.com/gongyiming1013-tech/todo-app#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
