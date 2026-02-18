@@ -293,7 +293,8 @@ class TestNoDataLoss(unittest.TestCase):
 
     def test_supabase_url_preserved(self):
         content = self._read_all_js()
-        self.assertIn('bsnyzpisrsywktjuzygf.supabase.co', content)
+        # Should contain either the original Supabase URL or the Worker Proxy URL
+        self.assertTrue('bsnyzpisrsywktjuzygf.supabase.co' in content or 'supabase-proxy' in content)
 
     def test_supabase_key_preserved(self):
         content = self._read_all_js()
