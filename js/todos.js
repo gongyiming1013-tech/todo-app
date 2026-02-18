@@ -18,6 +18,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function formatEta(eta) {
+    if (!eta) return { text: 'TBA', cssClass: 'eta-tba', isOverdue: false };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const etaDate = new Date(eta + 'T00:00:00');
+    const isOverdue = etaDate < today;
+    const mm = String(etaDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(etaDate.getDate()).padStart(2, '0');
+    return {
+        text: `${mm}-${dd}`,
+        cssClass: isOverdue ? 'eta-overdue' : '',
+        isOverdue
+    };
+}
+
 export function showSyncIndicator() {
     const el = document.getElementById('syncIndicator');
     el.classList.add('show');
@@ -80,7 +95,10 @@ export function renderTodos() {
         return;
     }
 
-    todoList.innerHTML = todos.map(todo => `
+    todoList.innerHTML = todos.map(todo => {
+        const eta = formatEta(todo.eta);
+        const etaCompleted = todo.status === '已完成';
+        return `
         <div class="todo-item ${todo.status === '已完成' ? 'completed' : ''}"
              data-id="${todo.id}"
              draggable="true">
@@ -108,9 +126,11 @@ export function renderTodos() {
                     <option value="P2" ${todo.priority === 'P2' || !todo.priority ? 'selected' : ''}>P2</option>
                     <option value="P3" ${todo.priority === 'P3' ? 'selected' : ''}>P3</option>
                 </select>
+                <span class="eta-badge ${etaCompleted ? 'eta-tba' : eta.cssClass}" title="预计完成日期">${etaCompleted ? eta.text : eta.text}</span>
+                <input type="date" class="eta-input" data-id="${todo.id}" value="${todo.eta || ''}" title="修改预计完成日期">
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
     // 统计
     const total = todos.length;
@@ -136,8 +156,10 @@ export async function addTodo() {
 
     const input = document.getElementById('todoInput');
     const prioritySelect = document.getElementById('priorityInput');
+    const etaInput = document.getElementById('etaInput');
     const text = input.value.trim();
     const priority = prioritySelect.value;
+    const eta = etaInput.value || null;
     const btn = document.getElementById('addBtn');
     const pendingImageFile = getPendingImageFile();
 
@@ -170,7 +192,8 @@ export async function addTodo() {
                 priority,
                 status: '未开始',
                 sort_order: minOrder,
-                image_url: imageUrl
+                image_url: imageUrl,
+                eta
             }]);
 
         btn.disabled = false;
@@ -181,6 +204,7 @@ export async function addTodo() {
         }
 
         input.value = '';
+        etaInput.value = '';
         clearPendingImage();
         loadTodos();
     } catch (e) {
@@ -246,5 +270,25 @@ export async function deleteTodo(id) {
         loadTodos();
     } catch (e) {
         alert('删除失败: ' + e.message);
+    }
+}
+
+export async function updateTodoEta(id, eta) {
+    if (!supabase) return;
+
+    try {
+        const { error } = await supabase
+            .from('todos')
+            .update({ eta: eta || null })
+            .eq('id', id);
+
+        if (error) {
+            alert('更新失败: ' + error.message);
+            return;
+        }
+
+        loadTodos();
+    } catch (e) {
+        alert('更新失败: ' + e.message);
     }
 }

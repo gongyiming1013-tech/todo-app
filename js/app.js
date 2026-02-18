@@ -5,7 +5,7 @@ import {
     showMessage, showAuth, showApp,
     handleLogin, handleRegister, handleResetPassword, handleSetNewPassword, handleLogout
 } from './auth.js';
-import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos } from './todos.js';
+import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta } from './todos.js';
 import { setupImageUploadEvents } from './imageUpload.js';
 
 async function init() {
@@ -96,6 +96,9 @@ document.getElementById('todoList').addEventListener('change', (e) => {
     }
     if (e.target.classList.contains('priority-select-small')) {
         updateTodoPriority(e.target.dataset.id, e.target.value);
+    }
+    if (e.target.classList.contains('eta-input')) {
+        updateTodoEta(e.target.dataset.id, e.target.value);
     }
 });
 
