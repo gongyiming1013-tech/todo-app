@@ -10,7 +10,7 @@ import { setupImageUploadEvents } from './imageUpload.js';
 
 async function init() {
     if (!supabase) {
-        showMessage('网络连接失败，请刷新页面重试', 'error');
+        showMessage('Connection failed. Please refresh the page.', 'error');
         return;
     }
 
@@ -20,7 +20,7 @@ async function init() {
 
         if (type === 'recovery') {
             showResetPassword();
-            showMessage('请设置您的新密码', 'success');
+            showMessage('Please set your new password', 'success');
         }
 
         const { data: { session } } = await supabase.auth.getSession();
@@ -38,7 +38,7 @@ async function init() {
         supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 showResetPassword();
-                showMessage('请设置您的新密码', 'success');
+                showMessage('Please set your new password', 'success');
                 return;
             }
 
@@ -59,7 +59,7 @@ async function init() {
             }
         });
     } catch (error) {
-        console.error('初始化失败:', error);
+        console.error('Init failed:', error);
     }
 }
 
@@ -97,8 +97,19 @@ document.getElementById('todoList').addEventListener('change', (e) => {
     if (e.target.classList.contains('priority-select-small')) {
         updateTodoPriority(e.target.dataset.id, e.target.value);
     }
-    if (e.target.classList.contains('eta-input')) {
+    if (e.target.classList.contains('eta-input-hidden')) {
         updateTodoEta(e.target.dataset.id, e.target.value);
+    }
+});
+
+document.getElementById('todoList').addEventListener('click', (e) => {
+    const badge = e.target.closest('.eta-badge');
+    if (badge) {
+        const id = badge.dataset.id;
+        const hiddenInput = badge.parentElement.querySelector(`.eta-input-hidden[data-id="${id}"]`);
+        if (hiddenInput) {
+            hiddenInput.showPicker();
+        }
     }
 });
 

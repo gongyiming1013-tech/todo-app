@@ -268,7 +268,7 @@ h1 {
 }
 
 .todo-item {
-    padding: 16px 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid #e5e5ea;
     transition: background 0.2s, transform 0.2s;
     cursor: grab;
@@ -277,15 +277,23 @@ h1 {
 .todo-row-top {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .todo-row-bottom {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 5px;
     padding-left: 26px;
+    justify-content: space-between;
+}
+
+.todo-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
 }
 
 .todo-item:active {
@@ -426,6 +434,12 @@ h1 {
     background: rgba(0, 122, 255, 0.1);
     color: #007AFF;
     white-space: nowrap;
+    cursor: pointer;
+    position: relative;
+}
+
+.eta-badge:hover {
+    opacity: 0.8;
 }
 
 .eta-badge.eta-tba {
@@ -436,6 +450,15 @@ h1 {
 .eta-badge.eta-overdue {
     background: rgba(255, 59, 48, 0.12);
     color: #FF3B30;
+}
+
+.eta-input-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 /* Delete button */
@@ -747,7 +770,7 @@ h1 {
     }
 
     .input-section .upload-btn::after {
-        content: '上传图片';
+        content: 'Upload Image';
         font-size: 14px;
     }
 
@@ -768,7 +791,7 @@ h1 {
     }
 
     .todo-item {
-        padding: 14px 16px;
+        padding: 10px 14px;
     }
 
     .todo-row-top {
@@ -777,7 +800,7 @@ h1 {
 
     .todo-row-bottom {
         padding-left: 0;
-        margin-top: 8px;
+        margin-top: 6px;
     }
 
     .drag-handle {
@@ -808,8 +831,7 @@ h1 {
     }
 
     .status-select,
-    .priority-select-small,
-    .eta-input {
+    .priority-select-small {
         padding: 6px 8px;
         font-size: 12px;
         min-height: 36px;

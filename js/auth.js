@@ -66,7 +66,7 @@ export function showApp() {
 
 export async function handleLogin() {
     if (!supabase) {
-        showMessage('网络连接失败，请刷新页面重试', 'error');
+        showMessage('Connection failed. Please refresh the page.', 'error');
         return;
     }
 
@@ -74,38 +74,38 @@ export async function handleLogin() {
     const password = document.getElementById('passwordInput').value;
 
     if (!email || !password) {
-        showMessage('请输入邮箱和密码', 'error');
+        showMessage('Please enter your email and password', 'error');
         return;
     }
 
     const btn = document.getElementById('loginBtn');
     btn.disabled = true;
-    btn.textContent = '登录中...';
+    btn.textContent = 'Signing in...';
 
     try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         btn.disabled = false;
-        btn.textContent = '登录';
+        btn.textContent = 'Sign In';
 
         if (error) {
             if (error.message.includes('Email not confirmed')) {
-                showMessage('邮箱尚未验证，请先到邮箱点击验证链接', 'error');
+                showMessage('Email not verified. Please check your inbox and click the verification link.', 'error');
             } else if (error.message.includes('Invalid login credentials')) {
-                showMessage('用户不存在或密码错误，请先注册账号或者尝试其他密码', 'error');
+                showMessage('Invalid email or password. Please sign up or try a different password.', 'error');
             } else {
-                showMessage('登录失败：' + error.message, 'error');
+                showMessage('Sign in failed: ' + error.message, 'error');
             }
         }
     } catch (e) {
         btn.disabled = false;
-        btn.textContent = '登录';
-        showMessage('登录失败：' + e.message, 'error');
+        btn.textContent = 'Sign In';
+        showMessage('Sign in failed: ' + e.message, 'error');
     }
 }
 
 export async function handleRegister() {
     if (!supabase) {
-        showMessage('网络连接失败，请刷新页面重试', 'error');
+        showMessage('Connection failed. Please refresh the page.', 'error');
         return;
     }
 
@@ -113,84 +113,84 @@ export async function handleRegister() {
     const password = document.getElementById('regPasswordInput').value;
 
     if (!email || !password) {
-        showMessage('请输入邮箱和密码', 'error');
+        showMessage('Please enter your email and password', 'error');
         return;
     }
 
     if (password.length < 6) {
-        showMessage('密码至少需要6位', 'error');
+        showMessage('Password must be at least 6 characters', 'error');
         return;
     }
 
     const btn = document.getElementById('registerBtn');
     btn.disabled = true;
-    btn.textContent = '注册中...';
+    btn.textContent = 'Signing up...';
 
     try {
         const { error } = await supabase.auth.signUp({ email, password });
         btn.disabled = false;
-        btn.textContent = '注册';
+        btn.textContent = 'Sign Up';
 
         if (error) {
             if (error.message.includes('already registered') || error.message.includes('already exists')) {
-                showMessage('该邮箱已注册，请直接登录。如果忘记密码，可点击"忘记密码"重置', 'error');
+                showMessage('This email is already registered. Please sign in or reset your password.', 'error');
                 showLogin();
             } else {
-                showMessage('注册失败：' + error.message, 'error');
+                showMessage('Sign up failed: ' + error.message, 'error');
             }
         } else {
-            showMessage('注册成功！请先到邮箱点击验证链接，然后再回来登录', 'success');
+            showMessage('Sign up successful! Please check your email and click the verification link, then come back to sign in.', 'success');
         }
     } catch (e) {
         btn.disabled = false;
-        btn.textContent = '注册';
-        showMessage('注册失败：' + e.message, 'error');
+        btn.textContent = 'Sign Up';
+        showMessage('Sign up failed: ' + e.message, 'error');
     }
 }
 
 export async function handleResetPassword() {
     if (!supabase) {
-        showMessage('网络连接失败，请刷新页面重试', 'error');
+        showMessage('Connection failed. Please refresh the page.', 'error');
         return;
     }
 
     const email = document.getElementById('resetEmailInput').value.trim();
 
     if (!email) {
-        showMessage('请输入邮箱地址', 'error');
+        showMessage('Please enter your email address', 'error');
         return;
     }
 
     const btn = document.getElementById('resetBtn');
     btn.disabled = true;
-    btn.textContent = '发送中...';
+    btn.textContent = 'Sending...';
 
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: window.location.origin + window.location.pathname
         });
         btn.disabled = false;
-        btn.textContent = '发送重置链接';
+        btn.textContent = 'Send Reset Link';
 
         if (error) {
             if (error.message.includes('rate limit') || error.message.includes('Rate limit')) {
-                showMessage('发送过于频繁，请稍后再试（约1小时后）', 'error');
+                showMessage('Too many requests. Please try again later.', 'error');
             } else {
-                showMessage('发送失败：' + error.message, 'error');
+                showMessage('Failed to send: ' + error.message, 'error');
             }
         } else {
-            showMessage('重置链接已发送到您的邮箱，请查收', 'success');
+            showMessage('Reset link sent to your email. Please check your inbox.', 'success');
         }
     } catch (e) {
         btn.disabled = false;
-        btn.textContent = '发送重置链接';
-        showMessage('发送失败：' + e.message, 'error');
+        btn.textContent = 'Send Reset Link';
+        showMessage('Failed to send: ' + e.message, 'error');
     }
 }
 
 export async function handleSetNewPassword() {
     if (!supabase) {
-        showMessage('网络连接失败，请刷新页面重试', 'error');
+        showMessage('Connection failed. Please refresh the page.', 'error');
         return;
     }
 
@@ -198,40 +198,40 @@ export async function handleSetNewPassword() {
     const confirmPassword = document.getElementById('confirmPasswordInput').value;
 
     if (!newPassword || !confirmPassword) {
-        showMessage('请输入新密码', 'error');
+        showMessage('Please enter your new password', 'error');
         return;
     }
 
     if (newPassword.length < 6) {
-        showMessage('密码至少需要6位', 'error');
+        showMessage('Password must be at least 6 characters', 'error');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        showMessage('两次输入的密码不一致', 'error');
+        showMessage('Passwords do not match', 'error');
         return;
     }
 
     const btn = document.getElementById('setPasswordBtn');
     btn.disabled = true;
-    btn.textContent = '设置中...';
+    btn.textContent = 'Setting...';
 
     try {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         btn.disabled = false;
-        btn.textContent = '设置新密码';
+        btn.textContent = 'Set New Password';
 
         if (error) {
-            showMessage('设置失败：' + error.message, 'error');
+            showMessage('Failed: ' + error.message, 'error');
         } else {
-            showMessage('密码设置成功！', 'success');
+            showMessage('Password updated successfully!', 'success');
             window.history.replaceState(null, '', window.location.pathname);
             showLogin();
         }
     } catch (e) {
         btn.disabled = false;
-        btn.textContent = '设置新密码';
-        showMessage('设置失败：' + e.message, 'error');
+        btn.textContent = 'Set New Password';
+        showMessage('Failed: ' + e.message, 'error');
     }
 }
 

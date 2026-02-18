@@ -5,9 +5,9 @@ let supabase = null;
 
 try {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase 初始化成功');
+    console.log('Supabase initialized');
 } catch (e) {
-    console.error('Supabase 初始化失败:', e);
+    console.error('Supabase init failed:', e);
 }
 
 export { supabase };
