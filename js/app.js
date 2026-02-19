@@ -7,6 +7,9 @@ import {
 } from './auth.js';
 import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta } from './todos.js';
 import { setupImageUploadEvents } from './imageUpload.js';
+import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal } from './settings.js';
+import { startListening, stopListening, setOnStateChange, setOnResult, setOnError, VoiceState } from './voice/voiceService.js';
+import { parseVoiceInput } from './nlu.js';
 
 async function init() {
     if (!supabase) {
@@ -114,6 +117,71 @@ document.getElementById('todoList').addEventListener('click', (e) => {
 });
 
 setupImageUploadEvents();
+
+// Voice input setup
+const voiceBtn = document.getElementById('voiceBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+
+setOnStateChange((state) => {
+    voiceBtn.className = 'voice-btn';
+    voiceStatus.textContent = '';
+    if (state === VoiceState.LISTENING) {
+        voiceBtn.classList.add('listening');
+        voiceStatus.textContent = 'Listening...';
+    } else if (state === VoiceState.PROCESSING) {
+        voiceBtn.classList.add('processing');
+        voiceStatus.textContent = 'Processing...';
+    } else if (state === VoiceState.ERROR) {
+        voiceBtn.classList.add('error');
+    }
+});
+
+setOnResult(async (text) => {
+    const parsed = await parseVoiceInput(text);
+    const todoInput = document.getElementById('todoInput');
+    const priorityInput = document.getElementById('priorityInput');
+    const etaInput = document.getElementById('etaInput');
+
+    if (todoInput) todoInput.value = parsed.text;
+    if (priorityInput && parsed.priority) priorityInput.value = parsed.priority;
+    if (etaInput && parsed.eta) etaInput.value = parsed.eta;
+});
+
+setOnError((error) => {
+    voiceStatus.textContent = error;
+    setTimeout(() => { voiceStatus.textContent = ''; }, 3000);
+});
+
+voiceBtn.addEventListener('click', () => startListening());
+
+// Settings modal
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const voiceProviderSelect = document.getElementById('voiceProviderSelect');
+
+settingsBtn.addEventListener('click', () => {
+    populateSettingsModal();
+    settingsModal.classList.add('show');
+});
+
+settingsCloseBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('show');
+});
+
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) settingsModal.classList.remove('show');
+});
+
+voiceProviderSelect.addEventListener('change', (e) => {
+    updateSettingsVisibility(e.target.value);
+});
+
+saveSettingsBtn.addEventListener('click', () => {
+    saveSettingsFromModal();
+    settingsModal.classList.remove('show');
+});
 
 // Start app
 init();
