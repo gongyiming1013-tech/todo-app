@@ -142,9 +142,26 @@ setOnResult(async (text) => {
     const priorityInput = document.getElementById('priorityInput');
     const etaInput = document.getElementById('etaInput');
 
-    if (todoInput) todoInput.value = parsed.text;
-    if (priorityInput && parsed.priority) priorityInput.value = parsed.priority;
-    if (etaInput && parsed.eta) etaInput.value = parsed.eta;
+    // Incremental merge: only update fields that the new voice input provides.
+    // If the input field already has text, append rather than replace.
+    if (todoInput && parsed.text) {
+        if (todoInput.value.trim()) {
+            todoInput.value = todoInput.value.trim() + '，' + parsed.text;
+        } else {
+            todoInput.value = parsed.text;
+        }
+    }
+    // Only update priority if explicitly mentioned (not the default P2)
+    if (priorityInput && parsed.priority && parsed.priorityExplicit) {
+        priorityInput.value = parsed.priority;
+    } else if (priorityInput && parsed.priority && !todoInput.value.trim()) {
+        // First input: always set priority
+        priorityInput.value = parsed.priority;
+    }
+    // Only update ETA if a date was actually detected
+    if (etaInput && parsed.eta) {
+        etaInput.value = parsed.eta;
+    }
 });
 
 setOnError((error) => {

@@ -197,6 +197,7 @@ export async function parseVoiceInput(text) {
             return {
                 text: llmResult.text,
                 priority: llmResult.priority || 'P2',
+                priorityExplicit: llmResult.priority != null && llmResult.priority !== 'P2',
                 eta: llmResult.eta || null,
             };
         }
@@ -210,6 +211,7 @@ export async function parseVoiceInput(text) {
     return {
         text: cleanedText || text,
         priority: priority || 'P2',
+        priorityExplicit: priority != null,
         eta: eta,
     };
 }
