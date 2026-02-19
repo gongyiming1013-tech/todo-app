@@ -11,6 +11,19 @@ function parseDate(text) {
     if (/明天/.test(text)) return formatDate(addDays(today, 1));
     if (/后天/.test(text)) return formatDate(addDays(today, 2));
     if (/大后天/.test(text)) return formatDate(addDays(today, 3));
+
+    // "下周X" / "下星期X" — specific weekday next week (must check before generic 下周)
+    const cnNextWeekdayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0 };
+    const cnNextWeekMatch = text.match(/下[周星期]+([一二三四五六日天])/);
+    if (cnNextWeekMatch) {
+        const targetDay = cnNextWeekdayMap[cnNextWeekMatch[1]];
+        if (targetDay !== undefined) {
+            // Next week's specific day: advance to next week then find the day
+            const diff = (targetDay - today.getDay() + 7) % 7 || 7;
+            return formatDate(addDays(today, diff));
+        }
+    }
+
     if (/下周|下星期/.test(text)) return formatDate(addDays(today, 7));
     if (/下个月/.test(text)) {
         const d = new Date(today);
@@ -83,7 +96,9 @@ function cleanText(text) {
     let cleaned = text;
 
     // Remove Chinese date expressions
-    cleaned = cleaned.replace(/今天|明天|后天|大后天|下周|下星期|下个月/g, '');
+    cleaned = cleaned.replace(/今天|明天|后天|大后天/g, '');
+    cleaned = cleaned.replace(/下[周星期]+[一二三四五六日天]/g, '');
+    cleaned = cleaned.replace(/下周|下星期|下个月/g, '');
     cleaned = cleaned.replace(/\d+\s*天[后之]/g, '');
     cleaned = cleaned.replace(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]/g, '');
     cleaned = cleaned.replace(/周[一二三四五六日]|星期[一二三四五六日天]/g, '');
