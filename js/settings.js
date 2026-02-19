@@ -2,7 +2,7 @@
 const SETTINGS_KEY = 'meboard_settings';
 
 const DEFAULT_SETTINGS = {
-    voiceProvider: 'browser',  // 'browser' | 'openai' | 'external'
+    voiceProvider: 'openai',   // 'openai' | 'external'
     openaiApiKey: '',
     openaiModel: 'gpt-4o-mini',
     whisperModel: 'whisper-1',
@@ -43,6 +43,15 @@ export function setSetting(key, value) {
     return saveSettings(settings);
 }
 
+// Show/hide provider-specific fields
+export function updateSettingsVisibility(provider) {
+    const openaiSection = document.getElementById('openaiSettingsSection');
+    const externalSection = document.getElementById('externalSettingsSection');
+
+    if (openaiSection) openaiSection.style.display = provider === 'openai' ? 'block' : 'none';
+    if (externalSection) externalSection.style.display = provider === 'external' ? 'block' : 'none';
+}
+
 // Populate settings modal from stored values
 export function populateSettingsModal() {
     const settings = getSettings();
@@ -57,15 +66,6 @@ export function populateSettingsModal() {
     if (externalUrlInput) externalUrlInput.value = settings.externalAppUrl;
 
     updateSettingsVisibility(settings.voiceProvider);
-}
-
-// Show/hide provider-specific fields
-export function updateSettingsVisibility(provider) {
-    const openaiSection = document.getElementById('openaiSettingsSection');
-    const externalSection = document.getElementById('externalSettingsSection');
-
-    if (openaiSection) openaiSection.style.display = provider === 'openai' ? 'block' : 'none';
-    if (externalSection) externalSection.style.display = provider === 'external' ? 'block' : 'none';
 }
 
 // Save settings from modal inputs

@@ -38,18 +38,14 @@ export function setOnError(callback) {
 
 async function loadAdapter(provider) {
     switch (provider) {
-        case 'openai': {
-            const { OpenAIAdapter } = await import('./openAIAdapter.js');
-            return new OpenAIAdapter();
-        }
         case 'external': {
             const { ExternalAdapter } = await import('./externalAdapter.js');
             return new ExternalAdapter();
         }
-        case 'browser':
+        case 'openai':
         default: {
-            const { WebSpeechAdapter } = await import('./webSpeechAdapter.js');
-            return new WebSpeechAdapter();
+            const { OpenAIAdapter } = await import('./openAIAdapter.js');
+            return new OpenAIAdapter();
         }
     }
 }

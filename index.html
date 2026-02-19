@@ -115,12 +115,11 @@
                 <div class="setting-group">
                     <label class="setting-label">Voice Input Method</label>
                     <select class="setting-select" id="voiceProviderSelect">
-                        <option value="browser">Browser Built-in (Free)</option>
                         <option value="openai">OpenAI Whisper + GPT (High Quality)</option>
                         <option value="external">External App (e.g. Typeless)</option>
                     </select>
                 </div>
-                <div class="setting-group" id="openaiSettingsSection" style="display:none;">
+                <div class="setting-group" id="openaiSettingsSection">
                     <label class="setting-label">OpenAI API Key</label>
                     <input type="password" class="setting-input" id="openaiApiKeyInput" placeholder="sk-...">
                     <p class="setting-hint">Your key is stored locally and never sent to our server.</p>
