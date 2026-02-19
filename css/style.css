@@ -461,6 +461,81 @@ h1 {
     pointer-events: none;
 }
 
+/* Category badge */
+.category-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(88, 86, 214, 0.1);
+    color: #5856D6;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.category-badge:hover {
+    opacity: 0.8;
+}
+
+.category-select {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    cursor: pointer;
+    outline: none;
+}
+
+.category-select:focus {
+    box-shadow: 0 0 0 2px rgba(88, 86, 214, 0.3);
+}
+
+.category-custom-input {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    outline: none;
+    width: 100px;
+}
+
+.category-custom-input:focus {
+    box-shadow: 0 0 0 2px rgba(88, 86, 214, 0.3);
+}
+
+/* Start date & duration badges */
+.startdate-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(142, 142, 147, 0.1);
+    color: #8e8e93;
+    white-space: nowrap;
+}
+
+.duration-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+    white-space: nowrap;
+}
+
+.badge-separator {
+    width: 1px;
+    height: 16px;
+    background: #e5e5ea;
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
 /* Delete button */
 
 .delete-btn {

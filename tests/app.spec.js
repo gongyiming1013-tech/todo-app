@@ -12,3 +12,8 @@ test('ETA date input is visible in the input section', async ({ page }) => {
   await expect(etaInput).toBeAttached();
   await expect(etaInput).toHaveAttribute('type', 'date');
 });
+
+test('page title is MeBoard', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle('MeBoard');
+});

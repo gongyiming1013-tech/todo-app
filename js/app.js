@@ -5,7 +5,7 @@ import {
     showMessage, showAuth, showApp,
     handleLogin, handleRegister, handleResetPassword, handleSetNewPassword, handleLogout
 } from './auth.js';
-import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta } from './todos.js';
+import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta, updateTodoCategory, DEFAULT_CATEGORIES } from './todos.js';
 import { setupImageUploadEvents } from './imageUpload.js';
 
 async function init() {
@@ -110,6 +110,70 @@ document.getElementById('todoList').addEventListener('click', (e) => {
         if (hiddenInput) {
             hiddenInput.showPicker();
         }
+    }
+
+    const catBadge = e.target.closest('.category-badge');
+    if (catBadge) {
+        const id = catBadge.dataset.id;
+        // Replace badge with a select dropdown
+        const select = document.createElement('select');
+        select.className = 'category-select';
+        select.dataset.id = id;
+        const currentCat = catBadge.textContent.trim();
+        // Collect all categories (defaults + custom from existing todos)
+        const allCats = [...DEFAULT_CATEGORIES];
+        document.querySelectorAll('.category-badge').forEach(b => {
+            const val = b.textContent.trim();
+            if (val && !allCats.includes(val)) allCats.push(val);
+        });
+        allCats.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            if (cat === currentCat) opt.selected = true;
+            select.appendChild(opt);
+        });
+        const customOpt = document.createElement('option');
+        customOpt.value = '__custom__';
+        customOpt.textContent = 'Custom...';
+        select.appendChild(customOpt);
+
+        catBadge.replaceWith(select);
+        select.focus();
+
+        select.addEventListener('change', () => {
+            if (select.value === '__custom__') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'category-custom-input';
+                input.dataset.id = id;
+                input.placeholder = 'Category name';
+                select.replaceWith(input);
+                input.focus();
+
+                const confirmCustom = () => {
+                    const val = input.value.trim();
+                    if (val) {
+                        updateTodoCategory(id, val);
+                    } else {
+                        loadTodos();
+                    }
+                };
+                input.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') confirmCustom();
+                    if (ev.key === 'Escape') loadTodos();
+                });
+                input.addEventListener('blur', confirmCustom);
+            } else {
+                updateTodoCategory(id, select.value);
+            }
+        });
+        select.addEventListener('blur', () => {
+            // If still a select (not replaced by input), revert on blur without change
+            setTimeout(() => {
+                if (document.contains(select)) loadTodos();
+            }, 150);
+        });
     }
 });
 

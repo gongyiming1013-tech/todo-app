@@ -25,6 +25,31 @@ const STATUS_LABELS = {
     '暂停': 'Paused'
 };
 
+export const DEFAULT_CATEGORIES = ['Work', 'Life', 'Learning', 'Wish List', 'Others'];
+
+function getCategoryOptions() {
+    const custom = todos
+        .map(t => t.category)
+        .filter(c => c && !DEFAULT_CATEGORIES.includes(c));
+    return [...DEFAULT_CATEGORIES, ...new Set(custom)];
+}
+
+function formatStartDate(createdAt) {
+    if (!createdAt) return { date: '', duration: '' };
+    const created = new Date(createdAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const createdDay = new Date(created);
+    createdDay.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today - createdDay) / 86400000);
+    const mm = String(created.getMonth() + 1).padStart(2, '0');
+    const dd = String(created.getDate()).padStart(2, '0');
+    return {
+        date: `${mm}-${dd}`,
+        duration: diffDays === 0 ? 'Today' : `${diffDays}d`
+    };
+}
+
 function formatEta(eta) {
     if (!eta) return { text: 'ETA', cssClass: 'eta-tba', isOverdue: false };
     const today = new Date();
@@ -105,6 +130,9 @@ export function renderTodos() {
     todoList.innerHTML = todos.map(todo => {
         const eta = formatEta(todo.eta);
         const etaCompleted = todo.status === '已完成';
+        const cat = todo.category || 'Others';
+        const catOptions = getCategoryOptions();
+        const startInfo = formatStartDate(todo.created_at);
         return `
         <div class="todo-item ${todo.status === '已完成' ? 'completed' : ''}"
              data-id="${todo.id}"
@@ -120,7 +148,11 @@ export function renderTodos() {
                 </button>
             </div>
             <div class="todo-row-bottom">
+                <span class="startdate-badge" title="Created">${startInfo.date}</span>
+                <span class="duration-badge" title="Duration">${startInfo.duration}</span>
+                <span class="badge-separator"></span>
                 <span class="priority-badge priority-${todo.priority || 'P2'}">${todo.priority || 'P2'}</span>
+                <span class="category-badge" data-id="${todo.id}" title="Category">${escapeHtml(cat)}</span>
                 <div class="todo-controls">
                     <select class="status-select" data-id="${todo.id}">
                         <option value="未开始" ${todo.status === '未开始' ? 'selected' : ''}>Not Started</option>
@@ -134,7 +166,7 @@ export function renderTodos() {
                         <option value="P2" ${todo.priority === 'P2' || !todo.priority ? 'selected' : ''}>P2</option>
                         <option value="P3" ${todo.priority === 'P3' ? 'selected' : ''}>P3</option>
                     </select>
-                    <span class="eta-badge ${etaCompleted ? 'eta-tba' : eta.cssClass}" data-id="${todo.id}" title="点击选择日期">${etaCompleted ? eta.text : eta.text}</span>
+                    <span class="eta-badge ${etaCompleted ? 'eta-tba' : eta.cssClass}" data-id="${todo.id}" title="Click to set date">${etaCompleted ? eta.text : eta.text}</span>
                     <input type="date" class="eta-input-hidden" data-id="${todo.id}" value="${todo.eta || ''}">
                 </div>
             </div>
@@ -202,7 +234,8 @@ export async function addTodo() {
                 status: '未开始',
                 sort_order: minOrder,
                 image_url: imageUrl,
-                eta
+                eta,
+                category: 'Others'
             }]);
 
         btn.disabled = false;
@@ -289,6 +322,26 @@ export async function updateTodoEta(id, eta) {
         const { error } = await supabase
             .from('todos')
             .update({ eta: eta || null })
+            .eq('id', id);
+
+        if (error) {
+            alert('Update failed: ' + error.message);
+            return;
+        }
+
+        loadTodos();
+    } catch (e) {
+        alert('Update failed: ' + e.message);
+    }
+}
+
+export async function updateTodoCategory(id, category) {
+    if (!supabase) return;
+
+    try {
+        const { error } = await supabase
+            .from('todos')
+            .update({ category })
             .eq('id', id);
 
         if (error) {
