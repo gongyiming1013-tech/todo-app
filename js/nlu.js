@@ -134,11 +134,38 @@ function formatDate(date) {
 }
 
 // Parse with OpenAI GPT for better understanding
-async function parseWithLLM(text, settings) {
+async function parseWithLLM(text, settings, existingContext) {
     if (!settings.openaiApiKey) return null;
 
     const today = new Date().toISOString().split('T')[0];
-    const prompt = `You are a task parser. Extract structured data from the user's voice input.
+    let prompt;
+
+    if (existingContext && existingContext.text) {
+        // Merge mode: user is refining an existing task
+        prompt = `You are a task parser. The user is building a to-do item using voice input, possibly across multiple rounds.
+
+Today's date: ${today}
+
+Current task state:
+- text: "${existingContext.text}"
+- priority: "${existingContext.priority || 'P2'}"
+- eta: "${existingContext.eta || 'not set'}"
+
+The user just said: "${text}"
+
+Determine the user's intent:
+- If the new input CORRECTS or REPLACES part of the existing text, update it accordingly.
+- If the new input ADDS new information not covered before, merge it with the existing text.
+- If the new input only provides a date or priority, keep the existing text unchanged.
+- Extract any priority or date information from the new input.
+
+Return ONLY a JSON object:
+- "text": the final merged/corrected task description
+- "priority": one of "P0","P1","P2","P3", or null if not mentioned in the NEW input
+- "eta": deadline as "YYYY-MM-DD" if mentioned in the NEW input, or null
+- "textChanged": true if you modified the text field, false if text stays the same`;
+    } else {
+        prompt = `You are a task parser. Extract structured data from the user's voice input.
 
 Today's date: ${today}
 
@@ -150,6 +177,7 @@ Return ONLY a JSON object with these fields:
 - "eta": deadline as "YYYY-MM-DD" if mentioned, or null
 
 Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1","eta":"${formatDate(addDays(new Date(), 1))}"}`;
+    }
 
     try {
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -187,18 +215,20 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
 }
 
 // Main NLU function: parse voice text into todo fields
-export async function parseVoiceInput(text) {
+// existingContext: { text, priority, eta } — current form state for incremental updates
+export async function parseVoiceInput(text, existingContext) {
     const settings = getSettings();
 
     // Try LLM parsing first if OpenAI key is available
     if (settings.openaiApiKey && settings.voiceProvider === 'openai') {
-        const llmResult = await parseWithLLM(text, settings);
-        if (llmResult && llmResult.text) {
+        const llmResult = await parseWithLLM(text, settings, existingContext);
+        if (llmResult) {
             return {
-                text: llmResult.text,
-                priority: llmResult.priority || 'P2',
-                priorityExplicit: llmResult.priority != null && llmResult.priority !== 'P2',
+                text: llmResult.text || (existingContext?.text) || text,
+                priority: llmResult.priority || null,
+                priorityExplicit: llmResult.priority != null,
                 eta: llmResult.eta || null,
+                textChanged: llmResult.textChanged !== false,
             };
         }
     }
@@ -213,5 +243,6 @@ export async function parseVoiceInput(text) {
         priority: priority || 'P2',
         priorityExplicit: priority != null,
         eta: eta,
+        textChanged: true,
     };
 }

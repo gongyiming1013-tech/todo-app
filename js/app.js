@@ -137,28 +137,30 @@ setOnStateChange((state) => {
 });
 
 setOnResult(async (text) => {
-    const parsed = await parseVoiceInput(text);
     const todoInput = document.getElementById('todoInput');
     const priorityInput = document.getElementById('priorityInput');
     const etaInput = document.getElementById('etaInput');
 
-    // Incremental merge: only update fields that the new voice input provides.
-    // If the input field already has text, append rather than replace.
-    if (todoInput && parsed.text) {
-        if (todoInput.value.trim()) {
-            todoInput.value = todoInput.value.trim() + '，' + parsed.text;
-        } else {
-            todoInput.value = parsed.text;
-        }
+    // Pass current form state so NLU can intelligently merge/correct
+    const existingContext = todoInput.value.trim() ? {
+        text: todoInput.value.trim(),
+        priority: priorityInput?.value || 'P2',
+        eta: etaInput?.value || null,
+    } : null;
+
+    const parsed = await parseVoiceInput(text, existingContext);
+
+    // Update text: GPT decides whether to replace, merge, or keep
+    if (parsed.textChanged && parsed.text) {
+        todoInput.value = parsed.text;
+    } else if (!existingContext && parsed.text) {
+        todoInput.value = parsed.text;
     }
-    // Only update priority if explicitly mentioned (not the default P2)
+    // Update priority only if explicitly mentioned
     if (priorityInput && parsed.priority && parsed.priorityExplicit) {
         priorityInput.value = parsed.priority;
-    } else if (priorityInput && parsed.priority && !todoInput.value.trim()) {
-        // First input: always set priority
-        priorityInput.value = parsed.priority;
     }
-    // Only update ETA if a date was actually detected
+    // Update ETA only if a date was detected
     if (etaInput && parsed.eta) {
         etaInput.value = parsed.eta;
     }
