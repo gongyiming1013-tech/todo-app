@@ -809,6 +809,198 @@ h1 {
     cursor: help;
 }
 
+/* User bar actions */
+.user-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Settings button */
+.settings-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    color: #8e8e93;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.settings-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #1c1c1e;
+}
+
+/* Voice button */
+.voice-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.voice-btn:hover {
+    background: rgba(255, 59, 48, 0.18);
+    transform: translateY(-1px);
+}
+
+.voice-btn.listening {
+    background: #FF3B30;
+    color: white;
+    animation: voice-pulse 1.5s infinite;
+}
+
+.voice-btn.processing {
+    background: rgba(0, 122, 255, 0.15);
+    color: #007AFF;
+    pointer-events: none;
+}
+
+.voice-btn.error {
+    background: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+}
+
+.voice-status {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    white-space: nowrap;
+    color: #8e8e93;
+    pointer-events: none;
+}
+
+@keyframes voice-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); }
+}
+
+/* Settings Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 12px;
+}
+
+.modal-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1c1c1e;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    color: #8e8e93;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.modal-body {
+    padding: 12px 24px 20px;
+}
+
+.modal-footer {
+    padding: 0 24px 24px;
+}
+
+.setting-group {
+    margin-bottom: 18px;
+}
+
+.setting-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.setting-select,
+.setting-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.setting-select:focus,
+.setting-input:focus {
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+.setting-hint {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
 /* Mobile */
 @media (max-width: 600px) {
     body {
@@ -920,6 +1112,31 @@ h1 {
     }
 
     .source-text-indicator {
+        display: none;
+    }
+
+    .voice-btn {
+        width: 100%;
+        height: 44px;
+        flex-direction: row;
+        gap: 6px;
+        border-radius: 10px;
+    }
+
+    .voice-btn::after {
+        content: 'Voice Input';
+        font-size: 14px;
+    }
+
+    .voice-btn.listening::after {
+        content: 'Listening...';
+    }
+
+    .voice-btn.processing::after {
+        content: 'Processing...';
+    }
+
+    .voice-status {
         display: none;
     }
 
