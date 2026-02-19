@@ -64,9 +64,9 @@ export async function startListening() {
     try {
         currentAdapter = await loadAdapter(settings.voiceProvider);
 
-        currentAdapter.onResult = (text) => {
+        currentAdapter.onResult = async (text) => {
             setState(VoiceState.PROCESSING);
-            if (onResult) onResult(text);
+            if (onResult) await onResult(text);
             setState(VoiceState.IDLE);
         };
 
@@ -98,5 +98,8 @@ export async function stopListening() {
         }
         currentAdapter = null;
     }
-    setState(VoiceState.IDLE);
+    // Only reset to IDLE if not already transitioned by adapter callback
+    if (state === VoiceState.LISTENING) {
+        setState(VoiceState.IDLE);
+    }
 }

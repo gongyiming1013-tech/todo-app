@@ -46,7 +46,15 @@ export class OpenAIAdapter {
     async stop() {
         this._stopped = true;
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-            this.mediaRecorder.stop();
+            // Wait for onstop handler to complete processing
+            await new Promise((resolve) => {
+                const originalOnStop = this.mediaRecorder.onstop;
+                this.mediaRecorder.onstop = async (e) => {
+                    if (originalOnStop) await originalOnStop(e);
+                    resolve();
+                };
+                this.mediaRecorder.stop();
+            });
         }
     }
 
@@ -83,7 +91,7 @@ export class OpenAIAdapter {
             }
 
             const { text } = await transcriptionRes.json();
-            if (this.onResult) this.onResult(text);
+            if (this.onResult) await this.onResult(text);
         } catch (e) {
             if (this.onError) this.onError(e.message || 'Failed to process audio');
         }
