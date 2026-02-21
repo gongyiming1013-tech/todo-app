@@ -7,9 +7,16 @@ import {
 } from './auth.js';
 import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta, updateTodoCategory, DEFAULT_CATEGORIES } from './todos.js';
 import { setupImageUploadEvents } from './imageUpload.js';
-import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal } from './settings.js';
+import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal, syncSettingsForUser, setSettingsSupabaseClient } from './settings.js';
 import { startListening, stopListening, setOnStateChange, setOnResult, setOnError, VoiceState } from './voice/voiceService.js';
+import { getVoiceDebugLogs, clearVoiceDebugLogs, logVoiceEvent } from './voice/debugLog.js';
 import { parseVoiceInput } from './nlu.js';
+
+setSettingsSupabaseClient(supabase);
+window.getVoiceDebugLogs = getVoiceDebugLogs;
+window.clearVoiceDebugLogs = clearVoiceDebugLogs;
+window.get_voice_debug_logs = getVoiceDebugLogs;
+window.clear_voice_debug_logs = clearVoiceDebugLogs;
 
 async function init() {
     if (!supabase) {
@@ -30,6 +37,7 @@ async function init() {
         if (session) {
             setCurrentUser(session.user);
             document.getElementById('userEmail').textContent = session.user.email;
+            await syncSettingsForUser(session.user.id);
 
             if (type !== 'recovery') {
                 showApp();
@@ -38,27 +46,32 @@ async function init() {
             }
         }
 
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'PASSWORD_RECOVERY') {
-                showResetPassword();
-                showMessage('Please set your new password', 'success');
-                return;
-            }
-
-            if (session) {
-                setCurrentUser(session.user);
-                document.getElementById('userEmail').textContent = session.user.email;
-
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                if (hashParams.get('type') !== 'recovery') {
-                    showApp();
-                    loadTodos();
-                    subscribeToChanges();
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            try {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showResetPassword();
+                    showMessage('Please set your new password', 'success');
+                    return;
                 }
-            } else {
-                setCurrentUser(null);
-                setTodos([]);
-                showAuth();
+
+                if (session) {
+                    setCurrentUser(session.user);
+                    document.getElementById('userEmail').textContent = session.user.email;
+                    await syncSettingsForUser(session.user.id);
+
+                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                    if (hashParams.get('type') !== 'recovery') {
+                        showApp();
+                        loadTodos();
+                        subscribeToChanges();
+                    }
+                } else {
+                    setCurrentUser(null);
+                    setTodos([]);
+                    showAuth();
+                }
+            } catch (error) {
+                console.error('Auth state handling failed:', error);
             }
         });
     } catch (error) {
@@ -231,21 +244,36 @@ setOnResult(async (text) => {
 });
 
 setOnError((error) => {
+    logVoiceEvent('ui.voice.error.shown', { error });
     voiceStatus.textContent = error;
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        alert(error);
+    }
     setTimeout(() => { voiceStatus.textContent = ''; }, 3000);
 });
 
-voiceBtn.addEventListener('click', () => startListening());
+voiceBtn.addEventListener('click', () => {
+    startListening();
+    voiceBtn.blur();
+});
 
 // Settings modal
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const settingsSaveStatus = document.getElementById('settingsSaveStatus');
 const voiceProviderSelect = document.getElementById('voiceProviderSelect');
+
+function setSettingsSaveStatus(message = '', type = '') {
+    settingsSaveStatus.textContent = message;
+    settingsSaveStatus.classList.remove('success', 'error');
+    if (type) settingsSaveStatus.classList.add(type);
+}
 
 settingsBtn.addEventListener('click', () => {
     populateSettingsModal();
+    setSettingsSaveStatus('');
     settingsModal.classList.add('show');
 });
 
@@ -261,9 +289,30 @@ voiceProviderSelect.addEventListener('change', (e) => {
     updateSettingsVisibility(e.target.value);
 });
 
-saveSettingsBtn.addEventListener('click', () => {
-    saveSettingsFromModal();
-    settingsModal.classList.remove('show');
+saveSettingsBtn.addEventListener('click', async () => {
+    const originalText = saveSettingsBtn.textContent;
+    saveSettingsBtn.disabled = true;
+    saveSettingsBtn.textContent = '保存中...';
+    setSettingsSaveStatus('保存中...');
+    try {
+        const currentUser = getCurrentUser();
+        const { cloudError } = await saveSettingsFromModal(currentUser?.id);
+        if (cloudError) {
+            setSettingsSaveStatus(`本地保存成功，但云端同步失败：${cloudError.message}`, 'error');
+            return;
+        }
+        if (currentUser) {
+            setSettingsSaveStatus('保存成功，云端同步成功。', 'success');
+        } else {
+            setSettingsSaveStatus('保存成功（仅本地）。登录后可自动同步到云端。', 'success');
+        }
+        setTimeout(() => {
+            settingsModal.classList.remove('show');
+        }, 1000);
+    } finally {
+        saveSettingsBtn.disabled = false;
+        saveSettingsBtn.textContent = originalText;
+    }
 });
 
 // Start app
