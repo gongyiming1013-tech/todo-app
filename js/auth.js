@@ -74,7 +74,7 @@ export async function handleLogin() {
     const password = document.getElementById('passwordInput').value;
 
     if (!email || !password) {
-        showMessage('Please enter your email and password', 'error');
+        showMessage('请输入邮箱和密码', 'error');
         return;
     }
 
@@ -91,7 +91,7 @@ export async function handleLogin() {
             if (error.message.includes('Email not confirmed')) {
                 showMessage('Email not verified. Please check your inbox and click the verification link.', 'error');
             } else if (error.message.includes('Invalid login credentials')) {
-                showMessage('Invalid email or password. Please sign up or try a different password.', 'error');
+                showMessage('邮箱或密码错误；如果你刚注册，可能是 Supabase 仍开启了邮箱验证。', 'error');
             } else {
                 showMessage('Sign in failed: ' + error.message, 'error');
             }
@@ -111,14 +111,20 @@ export async function handleRegister() {
 
     const email = document.getElementById('regEmailInput').value.trim();
     const password = document.getElementById('regPasswordInput').value;
+    const confirmPassword = document.getElementById('regConfirmPasswordInput').value;
 
-    if (!email || !password) {
-        showMessage('Please enter your email and password', 'error');
+    if (!email || !password || !confirmPassword) {
+        showMessage('请输入邮箱和密码', 'error');
         return;
     }
 
     if (password.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error');
+        showMessage('密码至少需要6位', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showMessage('两次输入的密码不一致', 'error');
         return;
     }
 
@@ -127,7 +133,7 @@ export async function handleRegister() {
     btn.textContent = 'Signing up...';
 
     try {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         btn.disabled = false;
         btn.textContent = 'Sign Up';
 
@@ -139,7 +145,38 @@ export async function handleRegister() {
                 showMessage('Sign up failed: ' + error.message, 'error');
             }
         } else {
-            showMessage('Sign up successful! Please check your email and click the verification link, then come back to sign in.', 'success');
+            if (data?.session) {
+                showMessage('注册并登录成功。', 'success');
+                return;
+            }
+            if (Array.isArray(data?.user?.identities) && data.user.identities.length === 0) {
+                showMessage('该邮箱可能已注册，请直接登录或重置密码。', 'error');
+                showLogin();
+                return;
+            }
+            showMessage('注册成功，正在登录...', 'success');
+            let signInError = null;
+            for (let i = 0; i < 3; i++) {
+                const { error: tryError } = await supabase.auth.signInWithPassword({ email, password });
+                if (!tryError) {
+                    signInError = null;
+                    break;
+                }
+                signInError = tryError;
+                if (i < 2 && tryError.message.includes('Invalid login credentials')) {
+                    await new Promise((resolve) => setTimeout(resolve, 700));
+                    continue;
+                }
+                break;
+            }
+            if (signInError) {
+                if (signInError.message.includes('Email not confirmed') || signInError.message.includes('Invalid login credentials')) {
+                    showMessage('注册成功，但当前 Supabase 仍开启邮箱验证；请先关闭 Confirm email 或完成邮箱验证。', 'error');
+                } else {
+                    showMessage('注册成功，请直接登录。', 'success');
+                }
+                showLogin();
+            }
         }
     } catch (e) {
         btn.disabled = false;
@@ -203,12 +240,12 @@ export async function handleSetNewPassword() {
     }
 
     if (newPassword.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error');
+        showMessage('密码至少需要6位', 'error');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        showMessage('Passwords do not match', 'error');
+        showMessage('两次输入的密码不一致', 'error');
         return;
     }
 
@@ -224,7 +261,7 @@ export async function handleSetNewPassword() {
         if (error) {
             showMessage('Failed: ' + error.message, 'error');
         } else {
-            showMessage('Password updated successfully!', 'success');
+            showMessage('密码设置成功', 'success');
             window.history.replaceState(null, '', window.location.pathname);
             showLogin();
         }
