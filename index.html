@@ -33,10 +33,10 @@
                 <button class="auth-btn" id="resetBtn">Send Reset Link</button>
                 <div class="auth-divider">Remember your password? <span class="auth-link" id="backToLoginLink">Back to Sign In</span></div>
             </div>
-
             <div id="registerForm" style="display:none;">
                 <input type="email" class="auth-input" id="regEmailInput" placeholder="Email address">
                 <input type="password" class="auth-input" id="regPasswordInput" placeholder="Password (at least 6 characters)">
+                <input type="password" class="auth-input" id="regConfirmPasswordInput" placeholder="Confirm password">
                 <button class="auth-btn" id="registerBtn">Sign Up</button>
                 <div class="auth-divider">Already have an account? <span class="auth-link" id="loginLink">Sign In</span></div>
             </div>
@@ -122,7 +122,7 @@
                 <div class="setting-group" id="openaiSettingsSection">
                     <label class="setting-label">OpenAI API Key</label>
                     <input type="password" class="setting-input" id="openaiApiKeyInput" placeholder="sk-...">
-                    <p class="setting-hint">Your key is stored locally and never sent to our server.</p>
+                    <p class="setting-hint">Your key is saved to your account and syncs across your devices.</p>
                 </div>
                 <div class="setting-group" id="externalSettingsSection" style="display:none;">
                     <label class="setting-label">External App URL (Optional)</label>
