@@ -5,11 +5,18 @@ import {
     showMessage, showAuth, showApp,
     handleLogin, handleRegister, handleResetPassword, handleSetNewPassword, handleLogout
 } from './auth.js';
-import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta, updateTodoCategory, DEFAULT_CATEGORIES } from './todos.js';
-import { setupImageUploadEvents } from './imageUpload.js';
-import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal } from './settings.js';
+import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta, updateTodoCategory, updateTodoText, addTodoImage, replaceTodoImage, deleteTodoImage, DEFAULT_CATEGORIES } from './todos.js';
+import { setupImageUploadEvents, showImageModal } from './imageUpload.js';
+import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal, syncSettingsForUser, setSettingsSupabaseClient } from './settings.js';
 import { startListening, stopListening, setOnStateChange, setOnResult, setOnError, VoiceState } from './voice/voiceService.js';
+import { getVoiceDebugLogs, clearVoiceDebugLogs, logVoiceEvent } from './voice/debugLog.js';
 import { parseVoiceInput } from './nlu.js';
+
+setSettingsSupabaseClient(supabase);
+window.getVoiceDebugLogs = getVoiceDebugLogs;
+window.clearVoiceDebugLogs = clearVoiceDebugLogs;
+window.get_voice_debug_logs = getVoiceDebugLogs;
+window.clear_voice_debug_logs = clearVoiceDebugLogs;
 
 async function init() {
     if (!supabase) {
@@ -30,6 +37,7 @@ async function init() {
         if (session) {
             setCurrentUser(session.user);
             document.getElementById('userEmail').textContent = session.user.email;
+            await syncSettingsForUser(session.user.id);
 
             if (type !== 'recovery') {
                 showApp();
@@ -38,27 +46,32 @@ async function init() {
             }
         }
 
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'PASSWORD_RECOVERY') {
-                showResetPassword();
-                showMessage('Please set your new password', 'success');
-                return;
-            }
-
-            if (session) {
-                setCurrentUser(session.user);
-                document.getElementById('userEmail').textContent = session.user.email;
-
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                if (hashParams.get('type') !== 'recovery') {
-                    showApp();
-                    loadTodos();
-                    subscribeToChanges();
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            try {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showResetPassword();
+                    showMessage('Please set your new password', 'success');
+                    return;
                 }
-            } else {
-                setCurrentUser(null);
-                setTodos([]);
-                showAuth();
+
+                if (session) {
+                    setCurrentUser(session.user);
+                    document.getElementById('userEmail').textContent = session.user.email;
+                    await syncSettingsForUser(session.user.id);
+
+                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                    if (hashParams.get('type') !== 'recovery') {
+                        showApp();
+                        loadTodos();
+                        subscribeToChanges();
+                    }
+                } else {
+                    setCurrentUser(null);
+                    setTodos([]);
+                    showAuth();
+                }
+            } catch (error) {
+                console.error('Auth state handling failed:', error);
             }
         });
     } catch (error) {
@@ -90,6 +103,90 @@ document.getElementById('todoList').addEventListener('click', (e) => {
     const deleteBtn = e.target.closest('.delete-btn');
     if (deleteBtn) {
         deleteTodo(deleteBtn.dataset.id);
+    }
+});
+
+function pickImageFile(onFile) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (file) await onFile(file);
+    }, { once: true });
+    fileInput.click();
+}
+
+document.getElementById('todoList').addEventListener('click', async (e) => {
+    const thumb = e.target.closest('.todo-image-thumb');
+    if (thumb?.dataset.imageUrl) {
+        showImageModal(thumb.dataset.imageUrl);
+        return;
+    }
+
+    const editBtn = e.target.closest('.edit-text-btn');
+    if (editBtn) {
+        const item = editBtn.closest('.todo-item');
+        item.classList.add('editing-text');
+        const input = item.querySelector('.todo-text-input');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+        return;
+    }
+
+    const saveBtn = e.target.closest('.todo-text-save-btn');
+    if (saveBtn) {
+        const item = saveBtn.closest('.todo-item');
+        const input = item?.querySelector('.todo-text-input');
+        const value = input?.value.trim() || '';
+        if (!value) return;
+        await updateTodoText(saveBtn.dataset.id, value);
+        return;
+    }
+
+    const cancelBtn = e.target.closest('.todo-text-cancel-btn');
+    if (cancelBtn) {
+        const item = cancelBtn.closest('.todo-item');
+        item?.classList.remove('editing-text');
+        return;
+    }
+
+    const addImageBtn = e.target.closest('.todo-image-add-btn');
+    if (addImageBtn && !addImageBtn.disabled) {
+        pickImageFile(async (file) => {
+            await addTodoImage(addImageBtn.dataset.id, file);
+        });
+        return;
+    }
+
+    const replaceImageBtn = e.target.closest('.todo-image-replace-btn');
+    if (replaceImageBtn) {
+        pickImageFile(async (file) => {
+            await replaceTodoImage(replaceImageBtn.dataset.id, replaceImageBtn.dataset.imageId, file);
+        });
+        return;
+    }
+
+    const deleteImageBtn = e.target.closest('.todo-image-delete-btn');
+    if (deleteImageBtn) {
+        await deleteTodoImage(deleteImageBtn.dataset.id, deleteImageBtn.dataset.imageId);
+    }
+});
+
+document.getElementById('todoList').addEventListener('keydown', async (e) => {
+    if (!e.target.classList.contains('todo-text-input')) return;
+    const id = e.target.dataset.id;
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const value = e.target.value.trim();
+        if (!value) return;
+        await updateTodoText(id, value);
+    }
+    if (e.key === 'Escape') {
+        const item = e.target.closest('.todo-item');
+        item?.classList.remove('editing-text');
     }
 });
 
@@ -231,21 +328,36 @@ setOnResult(async (text) => {
 });
 
 setOnError((error) => {
+    logVoiceEvent('ui.voice.error.shown', { error });
     voiceStatus.textContent = error;
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        alert(error);
+    }
     setTimeout(() => { voiceStatus.textContent = ''; }, 3000);
 });
 
-voiceBtn.addEventListener('click', () => startListening());
+voiceBtn.addEventListener('click', () => {
+    startListening();
+    voiceBtn.blur();
+});
 
 // Settings modal
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const settingsSaveStatus = document.getElementById('settingsSaveStatus');
 const voiceProviderSelect = document.getElementById('voiceProviderSelect');
+
+function setSettingsSaveStatus(message = '', type = '') {
+    settingsSaveStatus.textContent = message;
+    settingsSaveStatus.classList.remove('success', 'error');
+    if (type) settingsSaveStatus.classList.add(type);
+}
 
 settingsBtn.addEventListener('click', () => {
     populateSettingsModal();
+    setSettingsSaveStatus('');
     settingsModal.classList.add('show');
 });
 
@@ -261,9 +373,30 @@ voiceProviderSelect.addEventListener('change', (e) => {
     updateSettingsVisibility(e.target.value);
 });
 
-saveSettingsBtn.addEventListener('click', () => {
-    saveSettingsFromModal();
-    settingsModal.classList.remove('show');
+saveSettingsBtn.addEventListener('click', async () => {
+    const originalText = saveSettingsBtn.textContent;
+    saveSettingsBtn.disabled = true;
+    saveSettingsBtn.textContent = '保存中...';
+    setSettingsSaveStatus('保存中...');
+    try {
+        const currentUser = getCurrentUser();
+        const { cloudError } = await saveSettingsFromModal(currentUser?.id);
+        if (cloudError) {
+            setSettingsSaveStatus(`本地保存成功，但云端同步失败：${cloudError.message}`, 'error');
+            return;
+        }
+        if (currentUser) {
+            setSettingsSaveStatus('保存成功，云端同步成功。', 'success');
+        } else {
+            setSettingsSaveStatus('保存成功（仅本地）。登录后可自动同步到云端。', 'success');
+        }
+        setTimeout(() => {
+            settingsModal.classList.remove('show');
+        }, 1000);
+    } finally {
+        saveSettingsBtn.disabled = false;
+        saveSettingsBtn.textContent = originalText;
+    }
 });
 
 // Start app

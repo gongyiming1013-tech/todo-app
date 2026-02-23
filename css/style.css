@@ -373,6 +373,59 @@ h1 {
     min-width: 100px;
 }
 
+.todo-text-editor {
+    display: none;
+    gap: 6px;
+    align-items: center;
+}
+
+.editing-text .todo-text-display {
+    display: none;
+}
+
+.editing-text .todo-text-editor {
+    display: flex;
+}
+
+.todo-text-input {
+    min-width: 140px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 8px;
+    background: #f2f2f7;
+    font-size: 13px;
+}
+
+.todo-text-save-btn,
+.todo-text-cancel-btn,
+.edit-text-btn,
+.todo-image-add-btn,
+.todo-image-replace-btn,
+.todo-image-delete-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    background: #f2f2f7;
+    color: #1c1c1e;
+}
+
+.todo-image-add-btn {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+}
+
+.todo-image-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.todo-image-count-hint {
+    font-size: 11px;
+    color: #8e8e93;
+}
+
 /* Selects in todo items */
 
 .status-select {
@@ -665,7 +718,8 @@ h1 {
 .status-已完成 { color: #34C759; }
 .status-暂停 { color: #FF9500; }
 
-.todo-item.completed .todo-text {
+.todo-item.completed .todo-text,
+.todo-item.completed .todo-text-display {
     text-decoration: line-through;
     color: #8e8e93;
 }
@@ -679,6 +733,24 @@ h1 {
     cursor: pointer;
     transition: transform 0.2s;
     flex-shrink: 0;
+}
+
+.todo-image-gallery {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.todo-image-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.todo-image-actions {
+    display: flex;
+    gap: 2px;
 }
 
 .todo-image-thumb:hover {
@@ -852,11 +924,25 @@ h1 {
     transition: all 0.2s;
     flex-shrink: 0;
     position: relative;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .voice-btn:hover {
     background: rgba(255, 59, 48, 0.18);
     transform: translateY(-1px);
+}
+
+.voice-btn:focus,
+.voice-btn:focus-visible,
+.voice-btn:active {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.voice-btn::-moz-focus-inner {
+    border: 0;
 }
 
 .voice-btn.listening {
@@ -960,6 +1046,21 @@ h1 {
 
 .modal-footer {
     padding: 0 24px 24px;
+}
+
+.settings-save-status {
+    margin-top: 8px;
+    min-height: 20px;
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.settings-save-status.success {
+    color: #248a3d;
+}
+
+.settings-save-status.error {
+    color: #d70015;
 }
 
 .setting-group {
@@ -1084,6 +1185,14 @@ h1 {
 
     .todo-text {
         font-size: 14px;
+    }
+
+    .todo-text-editor {
+        flex-wrap: wrap;
+    }
+
+    .todo-image-gallery {
+        width: 100%;
     }
 
     .todo-image-thumb {

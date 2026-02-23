@@ -64,3 +64,53 @@ test('new user signup auto-signs in without email verification prompt', async ({
     password: 'abc12345',
   });
 });
+
+test('todo text edit controls are rendered and toggle on edit click', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const { setTodos, renderTodos } = await import('/js/todos.js');
+    document.getElementById('appContainer').style.display = 'block';
+    setTodos([{
+      id: 'todo-edit-1',
+      text: 'Editable item',
+      status: '未开始',
+      priority: 'P2',
+      eta: null,
+      category: 'Others',
+      created_at: '2024-01-01T00:00:00.000Z',
+      image_url: null,
+    }]);
+    renderTodos();
+  });
+
+  const item = page.locator('.todo-item[data-id="todo-edit-1"]');
+  await expect(item.locator('.edit-text-btn')).toBeVisible();
+  await item.locator('.edit-text-btn').click();
+  await expect(item.locator('.todo-text-save-btn')).toBeVisible();
+  await expect(item.locator('.todo-text-cancel-btn')).toBeVisible();
+});
+
+test('todo image management controls are visible for item with image', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const { setTodos, renderTodos } = await import('/js/todos.js');
+    document.getElementById('appContainer').style.display = 'block';
+    setTodos([{
+      id: 'todo-image-1',
+      text: 'Image item',
+      status: '未开始',
+      priority: 'P2',
+      eta: null,
+      category: 'Others',
+      created_at: '2024-01-01T00:00:00.000Z',
+      image_url: 'https://example.com/img.png',
+    }]);
+    renderTodos();
+  });
+
+  const item = page.locator('.todo-item[data-id="todo-image-1"]');
+  await expect(item.locator('.todo-image-add-btn')).toBeVisible();
+  await expect(item.locator('.todo-image-replace-btn')).toBeVisible();
+  await expect(item.locator('.todo-image-delete-btn')).toBeVisible();
+  await expect(item.locator('.todo-image-count-hint')).toHaveText('1/10');
+});
