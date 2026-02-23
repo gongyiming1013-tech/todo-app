@@ -158,7 +158,12 @@ export class OpenAIAdapter {
             if (this.onResult) await this.onResult(text);
         } catch (e) {
             logVoiceEvent('openai.transcription.error', { message: e.message });
-            if (this.onError) this.onError(e.message || 'Failed to process audio');
+            const rawMessage = e?.message || 'Failed to process audio';
+            let friendlyMessage = rawMessage;
+            if (rawMessage === 'Failed to fetch' || rawMessage.toLowerCase().includes('failed to fetch')) {
+                friendlyMessage = '无法连接 OpenAI（Fail to fetch）。请检查网络、代理/VPN，或稍后重试。';
+            }
+            if (this.onError) this.onError(friendlyMessage);
         }
     }
 }

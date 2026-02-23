@@ -124,6 +124,15 @@ npx serve .
 | source_text | text | 来源文本 |
 | created_at | timestamptz | 创建时间 |
 
+### user_settings 表（语音设置跨设备同步）
+
+为了让语音配置（如 OpenAI API Key）在同一账号下跨设备自动同步，请在 Supabase SQL Editor 执行根目录的 `user_settings.sql`。
+
+### todo_images 表（每条任务多图管理）
+
+如需启用每条待办最多 10 张图片（追加/替换/删除），请在 Supabase SQL Editor 执行根目录的 `todo_images.sql`。
+如果未执行该 SQL，应用会自动回退到旧版单图字段 `todos.image_url`。
+
 ### Storage Bucket
 
 创建名为 `todo-images` 的公开 bucket 用于存储图片附件。

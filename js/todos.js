@@ -3,6 +3,9 @@ import { getCurrentUser } from './auth.js';
 import { setupDragAndDrop } from './dragdrop.js';
 
 let todos = [];
+let todoImagesByTodoId = {};
+let todoImagesEnabled = true;
+const MAX_TODO_IMAGES = 10;
 
 export function getTodos() {
     return todos;
@@ -16,6 +19,58 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function isMissingRelationError(error) {
+    const msg = (error?.message || '').toLowerCase();
+    const details = (error?.details || '').toLowerCase();
+    const hint = (error?.hint || '').toLowerCase();
+    return (
+        error?.code === '42P01' ||
+        error?.code === 'PGRST205' ||
+        ((msg.includes('relation') || msg.includes('schema cache') || msg.includes('could not find the table')) && msg.includes('todo_images')) ||
+        (details.includes('todo_images')) ||
+        (hint.includes('todo_images'))
+    );
+}
+
+function getTodoById(id) {
+    return todos.find(t => t.id === id);
+}
+
+function getTodoImages(todo) {
+    const images = [...(todoImagesByTodoId[todo.id] || [])];
+    if (todo.image_url && !images.some(image => image.image_url === todo.image_url)) {
+        images.unshift({
+            id: `legacy-${todo.id}`,
+            todo_id: todo.id,
+            image_url: todo.image_url,
+            sort_order: -1,
+            is_legacy: true
+        });
+    }
+    return images.slice(0, MAX_TODO_IMAGES);
+}
+
+async function uploadImageForTodo(file, userId) {
+    const ext = file.name.split('.').pop() || 'png';
+    const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+        .from('todo-images')
+        .upload(fileName, file, { contentType: file.type, upsert: false });
+    if (uploadError) throw uploadError;
+    const { data: { publicUrl } } = supabase.storage.from('todo-images').getPublicUrl(fileName);
+    return publicUrl;
+}
+
+async function syncLegacyImageFromTable(todoId) {
+    if (!todoImagesEnabled) return;
+    const todo = getTodoById(todoId);
+    if (!todo) return;
+    const rows = todoImagesByTodoId[todoId] || [];
+    const nextLegacy = rows[0]?.image_url || null;
+    if ((todo.image_url || null) === nextLegacy) return;
+    await supabase.from('todos').update({ image_url: nextLegacy }).eq('id', todoId);
 }
 
 const STATUS_LABELS = {
@@ -88,6 +143,36 @@ export async function loadTodos() {
         }
 
         todos = data || [];
+        todoImagesByTodoId = {};
+
+        try {
+            const { data: imageRows, error: imageError } = await supabase
+                .from('todo_images')
+                .select('id,todo_id,image_url,sort_order,created_at')
+                .eq('user_id', currentUser.id)
+                .order('sort_order', { ascending: true })
+                .order('created_at', { ascending: true });
+            if (imageError) {
+                if (isMissingRelationError(imageError)) {
+                    todoImagesEnabled = false;
+                } else {
+                    console.error('Image load failed:', imageError);
+                }
+            } else {
+                todoImagesEnabled = true;
+                for (const row of imageRows || []) {
+                    if (!todoImagesByTodoId[row.todo_id]) todoImagesByTodoId[row.todo_id] = [];
+                    todoImagesByTodoId[row.todo_id].push(row);
+                }
+            }
+        } catch (imageErr) {
+            if (!isMissingRelationError(imageErr)) {
+                console.error('Image load failed:', imageErr);
+            } else {
+                todoImagesEnabled = false;
+            }
+        }
+
         renderTodos();
     } catch (e) {
         console.error('Load failed:', e);
@@ -133,14 +218,34 @@ export function renderTodos() {
         const cat = todo.category || 'Others';
         const catOptions = getCategoryOptions();
         const startInfo = formatStartDate(todo.created_at);
+        const images = getTodoImages(todo);
+        const imageCount = images.length;
+        const galleryHtml = images.length > 0
+            ? `<div class="todo-image-gallery">
+                ${images.map(image => `
+                    <div class="todo-image-item">
+                        <img src="${escapeHtml(image.image_url)}" class="todo-image-thumb" data-image-url="${escapeHtml(image.image_url)}" alt="附件">
+                        <div class="todo-image-actions">
+                            <button class="todo-image-replace-btn" data-id="${todo.id}" data-image-id="${image.id}" title="Replace image">↻</button>
+                            <button class="todo-image-delete-btn" data-id="${todo.id}" data-image-id="${image.id}" title="Delete image">×</button>
+                        </div>
+                    </div>`).join('')}
+               </div>`
+            : '';
         return `
         <div class="todo-item ${todo.status === '已完成' ? 'completed' : ''}"
              data-id="${todo.id}"
              draggable="true">
             <div class="todo-row-top">
                 <span class="drag-handle">☰</span>
-                ${todo.image_url ? `<img src="${todo.image_url}" class="todo-image-thumb" onclick="showImageModal('${todo.image_url}')" alt="附件">` : ''}
-                <span class="todo-text">${escapeHtml(todo.text)}${todo.source_text ? `<span class="source-text-indicator" title="${escapeHtml(todo.source_text.substring(0, 200))}">Text</span>` : ''}</span>
+                <span class="todo-text">
+                    <span class="todo-text-display">${escapeHtml(todo.text)}${todo.source_text ? `<span class="source-text-indicator" title="${escapeHtml(todo.source_text.substring(0, 200))}">Text</span>` : ''}</span>
+                    <div class="todo-text-editor">
+                        <input type="text" class="todo-text-input" value="${escapeHtml(todo.text)}" data-id="${todo.id}">
+                        <button class="todo-text-save-btn" data-id="${todo.id}">Save</button>
+                        <button class="todo-text-cancel-btn" data-id="${todo.id}">Cancel</button>
+                    </div>
+                </span>
                 <button class="delete-btn" data-id="${todo.id}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12"/>
@@ -153,7 +258,11 @@ export function renderTodos() {
                 <span class="badge-separator"></span>
                 <span class="priority-badge priority-${todo.priority || 'P2'}">${todo.priority || 'P2'}</span>
                 <span class="category-badge" data-id="${todo.id}" title="Category">${escapeHtml(cat)}</span>
+                ${galleryHtml}
+                <button class="todo-image-add-btn" data-id="${todo.id}" ${imageCount >= MAX_TODO_IMAGES ? 'disabled' : ''}>+ Image</button>
+                <span class="todo-image-count-hint">${imageCount}/${MAX_TODO_IMAGES}</span>
                 <div class="todo-controls">
+                    <button class="edit-text-btn" data-id="${todo.id}" title="Edit text">Edit</button>
                     <select class="status-select" data-id="${todo.id}">
                         <option value="未开始" ${todo.status === '未开始' ? 'selected' : ''}>Not Started</option>
                         <option value="进行中" ${todo.status === '进行中' ? 'selected' : ''}>In Progress</option>
@@ -352,5 +461,117 @@ export async function updateTodoCategory(id, category) {
         loadTodos();
     } catch (e) {
         alert('Update failed: ' + e.message);
+    }
+}
+
+export async function updateTodoText(id, text) {
+    if (!supabase) return;
+    const nextText = (text || '').trim();
+    if (!nextText) return;
+    try {
+        const { error } = await supabase
+            .from('todos')
+            .update({ text: nextText })
+            .eq('id', id);
+        if (error) {
+            alert('Update failed: ' + error.message);
+            return;
+        }
+        loadTodos();
+    } catch (e) {
+        alert('Update failed: ' + e.message);
+    }
+}
+
+export async function addTodoImage(todoId, file) {
+    const currentUser = getCurrentUser();
+    if (!supabase || !currentUser || !file) return;
+    const todo = getTodoById(todoId);
+    if (!todo) return;
+    const currentImages = getTodoImages(todo);
+    if (currentImages.length >= MAX_TODO_IMAGES) {
+        alert(`Max ${MAX_TODO_IMAGES} images per todo.`);
+        return;
+    }
+    if (!todoImagesEnabled && todo.image_url) {
+        alert('当前未启用多图表（todo_images），无法追加第2张及以上图片。请先在 Supabase 执行 todo_images.sql。');
+        return;
+    }
+    try {
+        const imageUrl = await uploadImageForTodo(file, currentUser.id);
+        if (todoImagesEnabled) {
+            const nextOrder = (todoImagesByTodoId[todoId] || []).length;
+            const { error: insertError } = await supabase.from('todo_images').insert([{
+                todo_id: todoId,
+                user_id: currentUser.id,
+                image_url: imageUrl,
+                sort_order: nextOrder
+            }]);
+            if (insertError && isMissingRelationError(insertError)) {
+                todoImagesEnabled = false;
+            } else if (insertError) {
+                throw insertError;
+            }
+        }
+        if (!todoImagesEnabled && todo.image_url) {
+            alert('检测到 todo_images 不可用，已保留现有图片。执行 todo_images.sql 后可继续追加到最多 10 张。');
+            return;
+        }
+        if (!todoImagesEnabled || !todo.image_url) {
+            const { error: legacyError } = await supabase.from('todos').update({ image_url: imageUrl }).eq('id', todoId);
+            if (legacyError) throw legacyError;
+        }
+        loadTodos();
+    } catch (e) {
+        alert('Image add failed: ' + e.message);
+    }
+}
+
+export async function replaceTodoImage(todoId, imageId, file) {
+    const currentUser = getCurrentUser();
+    if (!supabase || !currentUser || !file) return;
+    const todo = getTodoById(todoId);
+    if (!todo) return;
+    const currentImages = getTodoImages(todo);
+    if (currentImages.length > MAX_TODO_IMAGES) {
+        alert(`Max ${MAX_TODO_IMAGES} images per todo.`);
+        return;
+    }
+    try {
+        const imageUrl = await uploadImageForTodo(file, currentUser.id);
+        if (!todoImagesEnabled || (imageId || '').startsWith('legacy-')) {
+            const { error } = await supabase.from('todos').update({ image_url: imageUrl }).eq('id', todoId);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase.from('todo_images').update({ image_url: imageUrl }).eq('id', imageId).eq('todo_id', todoId);
+            if (error) throw error;
+            if (todo.image_url === currentImages.find(image => image.id === imageId)?.image_url) {
+                await supabase.from('todos').update({ image_url: imageUrl }).eq('id', todoId);
+            }
+        }
+        loadTodos();
+    } catch (e) {
+        alert('Image replace failed: ' + e.message);
+    }
+}
+
+export async function deleteTodoImage(todoId, imageId) {
+    if (!supabase) return;
+    const todo = getTodoById(todoId);
+    if (!todo) return;
+    try {
+        if (!todoImagesEnabled || (imageId || '').startsWith('legacy-')) {
+            const { error } = await supabase.from('todos').update({ image_url: null }).eq('id', todoId);
+            if (error) throw error;
+            loadTodos();
+            return;
+        }
+        const { error } = await supabase.from('todo_images').delete().eq('id', imageId).eq('todo_id', todoId);
+        if (error) throw error;
+        await loadTodos();
+        await syncLegacyImageFromTable(todoId);
+        loadTodos();
+    } catch (e) {
+        alert('Image delete failed: ' + e.message);
     }
 }

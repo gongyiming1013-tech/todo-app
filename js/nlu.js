@@ -1,5 +1,6 @@
 // Natural Language Understanding - parse voice text into structured todo fields
 import { getSettings } from './settings.js';
+import { logVoiceEvent } from './voice/debugLog.js';
 
 // Parse relative date expressions to YYYY-MM-DD
 function parseDate(text) {
@@ -180,6 +181,8 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
     }
 
     try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -195,7 +198,8 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
                 temperature: 0.1,
                 max_tokens: 200,
             }),
-        });
+            signal: controller.signal,
+        }).finally(() => clearTimeout(timer));
 
         if (!res.ok) return null;
 
@@ -209,6 +213,11 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
             return JSON.parse(jsonMatch[0]);
         }
     } catch (e) {
+        if (e.name === 'AbortError') {
+            logVoiceEvent('nlu.llm.timeout');
+            return null;
+        }
+        logVoiceEvent('nlu.llm.error', { message: e.message });
         console.error('LLM parsing failed:', e);
     }
     return null;
@@ -217,12 +226,14 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
 // Main NLU function: parse voice text into todo fields
 // existingContext: { text, priority, eta } — current form state for incremental updates
 export async function parseVoiceInput(text, existingContext) {
+    logVoiceEvent('nlu.parse.start', { chars: text?.length || 0, hasContext: Boolean(existingContext) });
     const settings = getSettings();
 
     // Try LLM parsing first if OpenAI key is available
     if (settings.openaiApiKey && settings.voiceProvider === 'openai') {
         const llmResult = await parseWithLLM(text, settings, existingContext);
         if (llmResult) {
+            logVoiceEvent('nlu.parse.llm.success');
             return {
                 text: llmResult.text || (existingContext?.text) || text,
                 priority: llmResult.priority || null,
@@ -237,6 +248,7 @@ export async function parseVoiceInput(text, existingContext) {
     const eta = parseDate(text);
     const priority = parsePriority(text);
     const cleanedText = cleanText(text);
+    logVoiceEvent('nlu.parse.local.success');
 
     return {
         text: cleanedText || text,
