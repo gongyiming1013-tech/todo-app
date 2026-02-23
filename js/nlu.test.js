@@ -275,7 +275,45 @@ async function runTests() {
         }
     }
 
-    console.log(`\n${passed} passed, ${failed} failed out of ${testCases.length} tests`);
+    const correctionCases = [
+        {
+            input: '你前面识别的文字有拼写错误',
+            context: { text: '明天提交周报', priority: 'P2', eta: null },
+            expect: { text: '明天提交周报', textChanged: false },
+            desc: 'Correction guidance only should not overwrite text',
+        },
+        {
+            input: '把周报改成日报',
+            context: { text: '明天提交周报', priority: 'P2', eta: null },
+            expect: { text: '明天提交日报', textChanged: true },
+            desc: 'Explicit replace instruction should update existing text',
+        },
+    ];
+
+    for (const tc of correctionCases) {
+        const result = await parseVoiceInput(tc.input, tc.context);
+        const errors = [];
+
+        if (result.text !== tc.expect.text) {
+            errors.push(`text: expected "${tc.expect.text}", got "${result.text}"`);
+        }
+        if (result.textChanged !== tc.expect.textChanged) {
+            errors.push(`textChanged: expected ${tc.expect.textChanged}, got ${result.textChanged}`);
+        }
+
+        if (errors.length === 0) {
+            passed++;
+            console.log(`  ✅ ${tc.desc}`);
+        } else {
+            failed++;
+            console.log(`  ❌ ${tc.desc}`);
+            errors.forEach(e => console.log(`     ${e}`));
+            console.log(`     input: "${tc.input}" with context ${JSON.stringify(tc.context)} → ${JSON.stringify(result)}`);
+        }
+    }
+
+    const totalCases = testCases.length + correctionCases.length;
+    console.log(`\n${passed} passed, ${failed} failed out of ${totalCases} tests`);
     if (failed > 0) process.exit(1);
 }
 

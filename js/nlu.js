@@ -124,6 +124,42 @@ function cleanText(text) {
     return cleaned.trim();
 }
 
+function isInstructionOnlyCorrection(text) {
+    const normalized = (text || '').trim();
+    if (!normalized) return false;
+    return /^(你前面|前面|刚才|刚刚|上一句|上句话|上条|这句|刚识别|你识别).*(有误|有错|错了|拼写|别字|不对|改一下|改成|改为)/.test(normalized)
+        || /^(纠正一下|修正一下|改一下|修改一下)/.test(normalized)
+        || /^(that|the)\s+(spelling|wording)\s+(is|was)\s+(wrong|incorrect)/i.test(normalized)
+        || /^fix\s+the\s+(spelling|wording)/i.test(normalized);
+}
+
+function applyLocalCorrection(existingText, instructionText) {
+    const current = (existingText || '').trim();
+    const instruction = (instructionText || '').trim();
+    if (!current || !instruction) return null;
+
+    const cnReplace = instruction.match(/把(.+?)改(?:成|为)(.+)$/);
+    if (cnReplace) {
+        const from = cnReplace[1].trim().replace(/^["'“”‘’]/, '').replace(/["'“”‘’]$/, '');
+        const to = cnReplace[2].trim().replace(/^["'“”‘’]/, '').replace(/["'“”‘’]$/, '');
+        if (from && to && current.includes(from)) {
+            return current.replace(from, to);
+        }
+    }
+
+    const enReplace = instruction.match(/replace\s+["']?(.+?)["']?\s+with\s+["']?(.+?)["']?$/i);
+    if (enReplace) {
+        const from = enReplace[1].trim();
+        const to = enReplace[2].trim();
+        if (from && to && current.toLowerCase().includes(from.toLowerCase())) {
+            const idx = current.toLowerCase().indexOf(from.toLowerCase());
+            return current.slice(0, idx) + to + current.slice(idx + from.length);
+        }
+    }
+
+    return null;
+}
+
 function addDays(date, days) {
     const d = new Date(date);
     d.setDate(d.getDate() + days);
@@ -158,6 +194,7 @@ Determine the user's intent:
 - If the new input CORRECTS or REPLACES part of the existing text, update it accordingly.
 - If the new input ADDS new information not covered before, merge it with the existing text.
 - If the new input only provides a date or priority, keep the existing text unchanged.
+- If the new input is only meta-guidance about recognition quality (e.g. "前面哪个字错了", "有拼写错误", "纠正一下"), DO NOT include that guidance in task text; keep text unchanged unless it provides explicit replacement content.
 - Extract any priority or date information from the new input.
 
 Return ONLY a JSON object:
@@ -240,6 +277,31 @@ export async function parseVoiceInput(text, existingContext) {
                 priorityExplicit: llmResult.priority != null,
                 eta: llmResult.eta || null,
                 textChanged: llmResult.textChanged !== false,
+            };
+        }
+    }
+
+    if (existingContext?.text) {
+        if (isInstructionOnlyCorrection(text)) {
+            logVoiceEvent('nlu.parse.local.instruction_only');
+            return {
+                text: existingContext.text,
+                priority: null,
+                priorityExplicit: false,
+                eta: null,
+                textChanged: false,
+            };
+        }
+
+        const corrected = applyLocalCorrection(existingContext.text, text);
+        if (corrected && corrected !== existingContext.text) {
+            logVoiceEvent('nlu.parse.local.correction_applied');
+            return {
+                text: corrected,
+                priority: null,
+                priorityExplicit: false,
+                eta: null,
+                textChanged: true,
             };
         }
     }
