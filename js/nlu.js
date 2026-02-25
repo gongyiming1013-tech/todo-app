@@ -6,6 +6,14 @@ import { logVoiceEvent } from './voice/debugLog.js';
 function parseDate(text) {
     const today = new Date();
     const lower = text.toLowerCase();
+    const weekStartMonday = (date) => {
+        const d = new Date(date);
+        const day = d.getDay() || 7;
+        d.setDate(d.getDate() - (day - 1));
+        d.setHours(0, 0, 0, 0);
+        return d;
+    };
+    const weekDayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7 };
 
     // Chinese date patterns
     if (/今天/.test(text)) return formatDate(today);
@@ -13,15 +21,26 @@ function parseDate(text) {
     if (/后天/.test(text)) return formatDate(addDays(today, 2));
     if (/大后天/.test(text)) return formatDate(addDays(today, 3));
 
+    // "本周X" / "这周X" / "本星期X"
+    const cnThisWeekMatch = text.match(/[本这][周星期]+([一二三四五六日天])/);
+    if (cnThisWeekMatch) {
+        const targetDay = weekDayMap[cnThisWeekMatch[1]];
+        if (targetDay) {
+            const start = weekStartMonday(today);
+            const target = addDays(start, targetDay - 1);
+            if (target < today) return formatDate(addDays(target, 7));
+            return formatDate(target);
+        }
+    }
+
     // "下周X" / "下星期X" — specific weekday next week (must check before generic 下周)
-    const cnNextWeekdayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0 };
     const cnNextWeekMatch = text.match(/下[周星期]+([一二三四五六日天])/);
     if (cnNextWeekMatch) {
-        const targetDay = cnNextWeekdayMap[cnNextWeekMatch[1]];
-        if (targetDay !== undefined) {
-            // Next week's specific day: advance to next week then find the day
-            const diff = (targetDay - today.getDay() + 7) % 7 || 7;
-            return formatDate(addDays(today, diff));
+        const targetDay = weekDayMap[cnNextWeekMatch[1]];
+        if (targetDay) {
+            const start = addDays(weekStartMonday(today), 7);
+            const target = addDays(start, targetDay - 1);
+            return formatDate(target);
         }
     }
 
@@ -79,6 +98,15 @@ function parseDate(text) {
     return null;
 }
 
+function hasWeekdaySignal(text) {
+    if (!text) return false;
+    return /[本这下]周[一二三四五六日天]/.test(text)
+        || /[本这下]星期[一二三四五六日天]/.test(text)
+        || /周[一二三四五六日天]/.test(text)
+        || /星期[一二三四五六日天]/.test(text)
+        || /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(text);
+}
+
 // Parse priority from text
 function parsePriority(text) {
     const lower = text.toLowerCase();
@@ -98,7 +126,7 @@ function cleanText(text) {
 
     // Remove Chinese date expressions
     cleaned = cleaned.replace(/今天|明天|后天|大后天/g, '');
-    cleaned = cleaned.replace(/下[周星期]+[一二三四五六日天]/g, '');
+    cleaned = cleaned.replace(/[本这下][周星期]+[一二三四五六日天]/g, '');
     cleaned = cleaned.replace(/下周|下星期|下个月/g, '');
     cleaned = cleaned.replace(/\d+\s*天[后之]/g, '');
     cleaned = cleaned.replace(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]/g, '');
@@ -167,14 +195,18 @@ function addDays(date, days) {
 }
 
 function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    const d = new Date(date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 // Parse with OpenAI GPT for better understanding
 async function parseWithLLM(text, settings, existingContext) {
     if (!settings.openaiApiKey) return null;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDate(new Date());
     let prompt;
 
     if (existingContext && existingContext.text) {
@@ -182,6 +214,7 @@ async function parseWithLLM(text, settings, existingContext) {
         prompt = `You are a task parser. The user is building a to-do item using voice input, possibly across multiple rounds.
 
 Today's date: ${today}
+Week starts on Monday. Interpret "本周/这周/下周" relative to the local date above.
 
 Current task state:
 - text: "${existingContext.text}"
@@ -206,6 +239,7 @@ Return ONLY a JSON object:
         prompt = `You are a task parser. Extract structured data from the user's voice input.
 
 Today's date: ${today}
+Week starts on Monday. Interpret "本周/这周/下周" relative to the local date above.
 
 User said: "${text}"
 
@@ -270,12 +304,14 @@ export async function parseVoiceInput(text, existingContext) {
     if (settings.openaiApiKey && settings.voiceProvider === 'openai') {
         const llmResult = await parseWithLLM(text, settings, existingContext);
         if (llmResult) {
+            const localEta = parseDate(text);
+            const eta = (hasWeekdaySignal(text) && localEta) ? localEta : (llmResult.eta || null);
             logVoiceEvent('nlu.parse.llm.success');
             return {
                 text: llmResult.text || (existingContext?.text) || text,
                 priority: llmResult.priority || null,
                 priorityExplicit: llmResult.priority != null,
-                eta: llmResult.eta || null,
+                eta,
                 textChanged: llmResult.textChanged !== false,
             };
         }

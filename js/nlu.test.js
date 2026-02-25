@@ -27,13 +27,28 @@ async function runTests() {
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
-    const fmt = (d) => d.toISOString().split('T')[0];
+    const fmt = (d) => {
+        const date = new Date(d);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    };
 
     // Get the next occurrence of a weekday (1=Mon, 5=Fri, etc.)
     const fmtNextWeekday = (targetDay) => {
         const d = new Date(today);
         const diff = (targetDay - d.getDay() + 7) % 7 || 7;
         d.setDate(d.getDate() + diff);
+        return fmt(d);
+    };
+    const fmtThisWeekday = (targetDay) => {
+        const d = new Date(today);
+        const day = d.getDay() || 7;
+        d.setDate(d.getDate() - (day - 1));
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + (targetDay - 1));
+        if (d < today) d.setDate(d.getDate() + 7);
         return fmt(d);
     };
 
@@ -164,6 +179,21 @@ async function runTests() {
             input: '下周一之前把上个季度的财务报表整理好发给王总审批',
             expect: { eta: fmtNextWeekday(1) },
             desc: 'Chinese long: financial report with weekday deadline',
+        },
+        {
+            input: '这周五前完成需求评审',
+            expect: { eta: fmtThisWeekday(5) },
+            desc: 'Chinese long: this week Friday deadline',
+        },
+        {
+            input: '本周四要做OKR复盘',
+            expect: { eta: fmtThisWeekday(4) },
+            desc: 'Chinese: this week Thursday',
+        },
+        {
+            input: '这周四下午需要复盘',
+            expect: { eta: fmtThisWeekday(4) },
+            desc: 'Chinese: this week Thursday with time',
         },
         {
             input: '提醒我周五晚上给爸妈打个电话问一下他们过年回不回来',

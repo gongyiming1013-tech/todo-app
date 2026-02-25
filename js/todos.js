@@ -52,6 +52,20 @@ function getTodoImages(todo) {
     return images.slice(0, MAX_TODO_IMAGES);
 }
 
+export function getTodoImagesForId(todoId) {
+    const todo = getTodoById(todoId);
+    if (!todo) return [];
+    return getTodoImages(todo);
+}
+
+export function isTodoImagesEnabled() {
+    return todoImagesEnabled;
+}
+
+export function getMaxTodoImages() {
+    return MAX_TODO_IMAGES;
+}
+
 async function uploadImageForTodo(file, userId) {
     const ext = file.name.split('.').pop() || 'png';
     const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -220,16 +234,11 @@ export function renderTodos() {
         const startInfo = formatStartDate(todo.created_at);
         const images = getTodoImages(todo);
         const imageCount = images.length;
-        const galleryHtml = images.length > 0
-            ? `<div class="todo-image-gallery">
-                ${images.map(image => `
-                    <div class="todo-image-item">
-                        <img src="${escapeHtml(image.image_url)}" class="todo-image-thumb" data-image-url="${escapeHtml(image.image_url)}" alt="附件">
-                        <div class="todo-image-actions">
-                            <button class="todo-image-replace-btn" data-id="${todo.id}" data-image-id="${image.id}" title="Replace image">↻</button>
-                            <button class="todo-image-delete-btn" data-id="${todo.id}" data-image-id="${image.id}" title="Delete image">×</button>
-                        </div>
-                    </div>`).join('')}
+        const primaryImage = images[0];
+        const galleryHtml = primaryImage
+            ? `<div class="todo-image-summary">
+                <img src="${escapeHtml(primaryImage.image_url)}" class="todo-image-thumb" data-todo-id="${todo.id}" alt="附件缩略图">
+                <span class="todo-image-count">${imageCount}</span>
                </div>`
             : '';
         return `
@@ -521,7 +530,7 @@ export async function addTodoImage(todoId, file) {
             const { error: legacyError } = await supabase.from('todos').update({ image_url: imageUrl }).eq('id', todoId);
             if (legacyError) throw legacyError;
         }
-        loadTodos();
+        await loadTodos();
     } catch (e) {
         alert('Image add failed: ' + e.message);
     }
@@ -549,9 +558,38 @@ export async function replaceTodoImage(todoId, imageId, file) {
                 await supabase.from('todos').update({ image_url: imageUrl }).eq('id', todoId);
             }
         }
-        loadTodos();
+        await loadTodos();
     } catch (e) {
         alert('Image replace failed: ' + e.message);
+    }
+}
+
+export async function moveTodoImage(todoId, imageId, direction) {
+    if (!supabase || !todoImagesEnabled) return;
+    if (!imageId || (imageId || '').startsWith('legacy-')) return;
+    const images = [...(todoImagesByTodoId[todoId] || [])];
+    const index = images.findIndex(image => image.id === imageId);
+    if (index < 0) return;
+    const nextIndex = direction === 'up' ? index - 1 : index + 1;
+    if (nextIndex < 0 || nextIndex >= images.length) return;
+    const current = images[index];
+    const swap = images[nextIndex];
+    try {
+        const { error: errA } = await supabase.from('todo_images')
+            .update({ sort_order: swap.sort_order })
+            .eq('id', current.id)
+            .eq('todo_id', todoId);
+        if (errA) throw errA;
+        const { error: errB } = await supabase.from('todo_images')
+            .update({ sort_order: current.sort_order })
+            .eq('id', swap.id)
+            .eq('todo_id', todoId);
+        if (errB) throw errB;
+        await loadTodos();
+        await syncLegacyImageFromTable(todoId);
+        await loadTodos();
+    } catch (e) {
+        alert('Image reorder failed: ' + e.message);
     }
 }
 
@@ -563,15 +601,97 @@ export async function deleteTodoImage(todoId, imageId) {
         if (!todoImagesEnabled || (imageId || '').startsWith('legacy-')) {
             const { error } = await supabase.from('todos').update({ image_url: null }).eq('id', todoId);
             if (error) throw error;
-            loadTodos();
+            await loadTodos();
             return;
         }
         const { error } = await supabase.from('todo_images').delete().eq('id', imageId).eq('todo_id', todoId);
         if (error) throw error;
         await loadTodos();
         await syncLegacyImageFromTable(todoId);
-        loadTodos();
+        await loadTodos();
     } catch (e) {
         alert('Image delete failed: ' + e.message);
+    }
+}
+
+export async function applyImageOverlayChanges(todoId, draftImages) {
+    const currentUser = getCurrentUser();
+    if (!supabase || !currentUser) return;
+    const todo = getTodoById(todoId);
+    if (!todo) return;
+    const enabled = todoImagesEnabled;
+    const images = draftImages || [];
+    if (!enabled && images.length > 1) {
+        alert('当前未启用多图表（todo_images），只能保留1张图片。请先在 Supabase 执行 todo_images.sql。');
+        return;
+    }
+    let fallbackUrl = null;
+    try {
+        const uploaded = [];
+        for (const item of images) {
+            if (item.is_new && item.file) {
+                const imageUrl = await uploadImageForTodo(item.file, currentUser.id);
+                uploaded.push({ ...item, image_url: imageUrl, is_new: false });
+            } else {
+                uploaded.push(item);
+            }
+        }
+        fallbackUrl = uploaded[0]?.image_url || null;
+
+        if (enabled) {
+            const existingRows = (todoImagesByTodoId[todoId] || []).map(image => image.id);
+            const ordered = uploaded.filter(img => !img.is_legacy);
+            const keepIds = new Set(ordered.filter(img => img.id).map(img => img.id));
+            const toDelete = existingRows.filter(id => !keepIds.has(id));
+            if (toDelete.length) {
+                const { error: deleteError } = await supabase.from('todo_images')
+                    .delete()
+                    .in('id', toDelete)
+                    .eq('todo_id', todoId);
+                if (deleteError) throw deleteError;
+            }
+
+            const inserts = ordered.filter(img => !img.id);
+            if (inserts.length) {
+                const { error: insertError } = await supabase.from('todo_images').insert(inserts.map(img => ({
+                    todo_id: todoId,
+                    user_id: currentUser.id,
+                    image_url: img.image_url,
+                    sort_order: ordered.indexOf(img)
+                })));
+                if (insertError) throw insertError;
+            }
+
+            for (let i = 0; i < ordered.length; i += 1) {
+                const row = ordered[i];
+                if (!row.id) continue;
+                const { error: updateError } = await supabase.from('todo_images')
+                    .update({ sort_order: i })
+                    .eq('id', row.id)
+                    .eq('todo_id', todoId);
+                if (updateError) throw updateError;
+            }
+            const { error: legacyError } = await supabase.from('todos').update({ image_url: fallbackUrl }).eq('id', todoId);
+            if (legacyError) throw legacyError;
+            await loadTodos();
+            await loadTodos();
+        } else {
+            const { error } = await supabase.from('todos').update({ image_url: fallbackUrl }).eq('id', todoId);
+            if (error) throw error;
+            await loadTodos();
+        }
+    } catch (e) {
+        if (isMissingRelationError(e)) {
+            todoImagesEnabled = false;
+            try {
+                await supabase.from('todos').update({ image_url: fallbackUrl }).eq('id', todoId);
+                await loadTodos();
+                return;
+            } catch (fallbackError) {
+                alert('Image update failed: ' + fallbackError.message);
+                return;
+            }
+        }
+        alert('Image update failed: ' + e.message);
     }
 }
