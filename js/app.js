@@ -388,19 +388,23 @@ saveSettingsBtn.addEventListener('click', async () => {
     setSettingsSaveStatus('保存中...');
     try {
         const currentUser = getCurrentUser();
-        const { cloudError } = await saveSettingsFromModal(currentUser?.id);
-        if (cloudError) {
-            setSettingsSaveStatus(`本地保存成功，但云端同步失败：${cloudError.message}`, 'error');
-            return;
-        }
-        if (currentUser) {
-            setSettingsSaveStatus('保存成功，云端同步成功。', 'success');
+        const { cloudSyncPromise } = saveSettingsFromModal(currentUser?.id);
+        if (currentUser && cloudSyncPromise) {
+            setSettingsSaveStatus('本地保存成功，云端同步中...', 'success');
+            cloudSyncPromise
+                .then(() => {
+                    setSettingsSaveStatus('保存成功，云端同步成功。', 'success');
+                })
+                .catch((error) => {
+                    setSettingsSaveStatus(`本地保存成功，但云端同步失败：${error.message}`, 'error');
+                    console.error('Failed to save cloud settings:', error);
+                });
         } else {
             setSettingsSaveStatus('保存成功（仅本地）。登录后可自动同步到云端。', 'success');
         }
         setTimeout(() => {
             settingsModal.classList.remove('show');
-        }, 1000);
+        }, 500);
     } finally {
         saveSettingsBtn.disabled = false;
         saveSettingsBtn.textContent = originalText;

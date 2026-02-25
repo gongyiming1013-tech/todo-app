@@ -223,8 +223,17 @@ export function populateSettingsModal() {
     updateSettingsVisibility(settings.voiceProvider);
 }
 
+function createCloudSyncTask(userId, settings, timeoutMs = 5000) {
+    if (!userId) return null;
+    const syncPromise = saveCloudSettings(userId, settings);
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('云端同步超时，请稍后重试。')), timeoutMs);
+    });
+    return Promise.race([syncPromise, timeoutPromise]);
+}
+
 // Save settings from modal inputs
-export async function saveSettingsFromModal(userId) {
+export function saveSettingsFromModal(userId) {
     const providerSelect = document.getElementById('voiceProviderSelect');
     const apiKeyInput = document.getElementById('openaiApiKeyInput');
     const regionSelect = document.getElementById('regionSelect');
@@ -253,16 +262,6 @@ export async function saveSettingsFromModal(userId) {
     };
 
     const savedSettings = saveSettings(settings);
-    let cloudError = null;
-
-    if (userId) {
-        try {
-            await saveCloudSettings(userId, savedSettings);
-        } catch (error) {
-            cloudError = error;
-            console.error('Failed to save cloud settings:', error);
-        }
-    }
-
-    return { settings: savedSettings, cloudError };
+    const cloudSyncPromise = createCloudSyncTask(userId, savedSettings);
+    return { settings: savedSettings, cloudSyncPromise };
 }
