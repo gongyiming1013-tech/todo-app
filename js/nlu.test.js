@@ -48,7 +48,6 @@ async function runTests() {
         d.setDate(d.getDate() - (day - 1));
         d.setHours(0, 0, 0, 0);
         d.setDate(d.getDate() + (targetDay - 1));
-        if (d < today) d.setDate(d.getDate() + 7);
         return fmt(d);
     };
 
@@ -196,6 +195,36 @@ async function runTests() {
             desc: 'Chinese: this week Thursday with time',
         },
         {
+            input: '这周天之前把发布文档写完',
+            expect: { eta: fmtThisWeekday(7) },
+            desc: 'Chinese: this week Sunday alias 周天',
+        },
+        {
+            input: '这周日提醒我做周复盘',
+            expect: { eta: fmtThisWeekday(7) },
+            desc: 'Chinese: this week Sunday alias 周日',
+        },
+        {
+            input: '这周一完成技术方案评审',
+            expect: { eta: fmtThisWeekday(1) },
+            desc: 'Chinese: this week Monday',
+        },
+        {
+            input: '这周二提交接口文档',
+            expect: { eta: fmtThisWeekday(2) },
+            desc: 'Chinese: this week Tuesday',
+        },
+        {
+            input: '这周三安排联调',
+            expect: { eta: fmtThisWeekday(3) },
+            desc: 'Chinese: this week Wednesday',
+        },
+        {
+            input: '这周六做回归测试',
+            expect: { eta: fmtThisWeekday(6) },
+            desc: 'Chinese: this week Saturday',
+        },
+        {
             input: '提醒我周五晚上给爸妈打个电话问一下他们过年回不回来',
             expect: { eta: fmtNextWeekday(5) },
             desc: 'Chinese long: personal call on Friday',
@@ -236,6 +265,26 @@ async function runTests() {
             input: 'next week I need to write a design document for the new microservices architecture and get it reviewed by the tech lead before the sprint planning',
             expect: { eta: fmt(nextWeek) },
             desc: 'English long: design doc with next week deadline',
+        },
+        {
+            input: 'This Monday finalize the release checklist',
+            expect: { eta: fmtThisWeekday(1) },
+            desc: 'English: this Monday',
+        },
+        {
+            input: 'This Thursday review test coverage',
+            expect: { eta: fmtThisWeekday(4) },
+            desc: 'English: this Thursday',
+        },
+        {
+            input: 'This Friday send the release note',
+            expect: { eta: fmtThisWeekday(5) },
+            desc: 'English: this Friday',
+        },
+        {
+            input: 'This Sunday prepare sprint summary',
+            expect: { eta: fmtThisWeekday(7) },
+            desc: 'English: this Sunday',
         },
         {
             input: 'low priority but whenever you get a chance look into upgrading our CI pipeline from Jenkins to GitHub Actions and write up a migration plan',
@@ -309,14 +358,26 @@ async function runTests() {
         {
             input: '你前面识别的文字有拼写错误',
             context: { text: '明天提交周报', priority: 'P2', eta: null },
-            expect: { text: '明天提交周报', textChanged: false },
+            expect: { text: '明天提交周报', textChanged: false, eta: null },
             desc: 'Correction guidance only should not overwrite text',
         },
         {
             input: '把周报改成日报',
             context: { text: '明天提交周报', priority: 'P2', eta: null },
-            expect: { text: '明天提交日报', textChanged: true },
+            expect: { text: '明天提交日报', textChanged: true, eta: null },
             desc: 'Explicit replace instruction should update existing text',
+        },
+        {
+            input: '前面的日期不对，改成这周天',
+            context: { text: '提交周报', priority: 'P2', eta: fmtNextWeekday(5) },
+            expect: { text: '提交周报', textChanged: false, eta: fmtThisWeekday(7) },
+            desc: 'Date correction guidance should update ETA to this Sunday',
+        },
+        {
+            input: '这句日期错了，改成这周五',
+            context: { text: '提交周报', priority: 'P2', eta: null },
+            expect: { text: '提交周报', textChanged: false, eta: fmtThisWeekday(5) },
+            desc: 'Date correction guidance should update ETA to this Friday',
         },
     ];
 
@@ -329,6 +390,9 @@ async function runTests() {
         }
         if (result.textChanged !== tc.expect.textChanged) {
             errors.push(`textChanged: expected ${tc.expect.textChanged}, got ${result.textChanged}`);
+        }
+        if (result.eta !== tc.expect.eta) {
+            errors.push(`eta: expected ${tc.expect.eta}, got ${result.eta}`);
         }
 
         if (errors.length === 0) {

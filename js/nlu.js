@@ -13,6 +13,10 @@ function parseDate(text) {
         d.setHours(0, 0, 0, 0);
         return d;
     };
+    const dateOfCurrentWeekday = (targetDay) => {
+        const start = weekStartMonday(today);
+        return addDays(start, targetDay - 1);
+    };
     const weekDayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7 };
 
     // Chinese date patterns
@@ -26,10 +30,8 @@ function parseDate(text) {
     if (cnThisWeekMatch) {
         const targetDay = weekDayMap[cnThisWeekMatch[1]];
         if (targetDay) {
-            const start = weekStartMonday(today);
-            const target = addDays(start, targetDay - 1);
-            if (target < today) return formatDate(addDays(target, 7));
-            return formatDate(target);
+            // Explicit "this week" should map to the current week even if the day already passed.
+            return formatDate(dateOfCurrentWeekday(targetDay));
         }
     }
 
@@ -72,6 +74,14 @@ function parseDate(text) {
         const d = new Date(today);
         d.setMonth(d.getMonth() + 1);
         return formatDate(d);
+    }
+
+    // English: this Monday/Thursday/... => current week (Mon-start), no auto-shift to next week
+    const enThisWeekMatch = lower.match(/\bthis\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
+    if (enThisWeekMatch) {
+        const weekdays = { 'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 'friday': 5, 'saturday': 6, 'sunday': 7 };
+        const targetDay = weekdays[enThisWeekMatch[1].toLowerCase()];
+        if (targetDay) return formatDate(dateOfCurrentWeekday(targetDay));
     }
 
     // English: in X days
@@ -218,6 +228,7 @@ async function parseWithLLM(text, settings, existingContext) {
 
 Today's date: ${today}
 Week starts on Monday. Interpret "本周/这周/下周" relative to the local date above.
+"这周日" and "这周天" both mean this week's Sunday.
 
 Current task state:
 - text: "${existingContext.text}"
@@ -243,6 +254,7 @@ Return ONLY a JSON object:
 
 Today's date: ${today}
 Week starts on Monday. Interpret "本周/这周/下周" relative to the local date above.
+"这周日" and "这周天" both mean this week's Sunday.
 
 User said: "${text}"
 
@@ -328,12 +340,14 @@ export async function parseVoiceInput(text, existingContext) {
 
     if (existingContext?.text) {
         if (isInstructionOnlyCorrection(text)) {
+            const eta = parseDate(text);
+            const priority = parsePriority(text);
             logVoiceEvent('nlu.parse.local.instruction_only');
             return {
                 text: existingContext.text,
-                priority: null,
-                priorityExplicit: false,
-                eta: null,
+                priority: priority || null,
+                priorityExplicit: priority != null,
+                eta: eta || null,
                 textChanged: false,
             };
         }
