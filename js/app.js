@@ -352,6 +352,7 @@ const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const settingsSaveStatus = document.getElementById('settingsSaveStatus');
 const voiceProviderSelect = document.getElementById('voiceProviderSelect');
+const regionSelect = document.getElementById('regionSelect');
 
 function setSettingsSaveStatus(message = '', type = '') {
     settingsSaveStatus.textContent = message;
@@ -375,6 +376,9 @@ settingsModal.addEventListener('click', (e) => {
 
 voiceProviderSelect.addEventListener('change', (e) => {
     updateSettingsVisibility(e.target.value);
+});
+regionSelect?.addEventListener('change', () => {
+    updateSettingsVisibility(voiceProviderSelect.value);
 });
 
 saveSettingsBtn.addEventListener('click', async () => {

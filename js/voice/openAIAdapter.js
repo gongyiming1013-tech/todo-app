@@ -13,8 +13,9 @@ export class OpenAIAdapter {
     }
 
     async start(settings) {
-        logVoiceEvent('openai.start.requested', { hasApiKey: Boolean(settings.openaiApiKey) });
-        if (!settings.openaiApiKey) {
+        const sttKey = this._getSttApiKey(settings);
+        logVoiceEvent('openai.start.requested', { hasApiKey: Boolean(sttKey) });
+        if (!sttKey) {
             throw new Error('OpenAI API Key is required. Please configure it in Settings.');
         }
 
@@ -115,16 +116,19 @@ export class OpenAIAdapter {
             // Step 1: Whisper transcription
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('model', settings.whisperModel || 'whisper-1');
+            const sttModel = (settings.region === 'china_mainland' ? settings.cnSttModel : settings.whisperModel) || 'whisper-1';
+            formData.append('model', sttModel);
             if (settings.language && settings.language !== 'auto') {
                 formData.append('language', settings.language);
             }
 
+            const baseUrl = this._getBaseUrl(settings);
+            const sttKey = this._getSttApiKey(settings);
             const transcriptionRes = await this._fetchWithTimeout(
-                'https://api.openai.com/v1/audio/transcriptions',
+                `${baseUrl}/v1/audio/transcriptions`,
                 {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${settings.openaiApiKey}` },
+                    headers: { 'Authorization': `Bearer ${sttKey}` },
                     body: formData,
                 },
                 25000,
@@ -165,5 +169,20 @@ export class OpenAIAdapter {
             }
             if (this.onError) this.onError(friendlyMessage);
         }
+    }
+
+    _getSttApiKey(settings) {
+        if (settings.region === 'china_mainland') {
+            return settings.cnSttApiKey || settings.openaiApiKey || '';
+        }
+        return settings.openaiApiKey || '';
+    }
+
+    _getBaseUrl(settings) {
+        const cnSttBaseUrl = settings.cnSttBaseUrl || settings.cnBaseUrl;
+        if (settings.region === 'china_mainland' && cnSttBaseUrl) {
+            return cnSttBaseUrl.replace(/\/$/, '');
+        }
+        return 'https://api.openai.com';
     }
 }

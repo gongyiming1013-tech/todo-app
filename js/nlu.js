@@ -204,7 +204,10 @@ function formatDate(date) {
 
 // Parse with OpenAI GPT for better understanding
 async function parseWithLLM(text, settings, existingContext) {
-    if (!settings.openaiApiKey) return null;
+    const apiKey = settings.region === 'china_mainland'
+        ? (settings.cnRewriteApiKey || settings.openaiApiKey)
+        : settings.openaiApiKey;
+    if (!apiKey) return null;
 
     const today = formatDate(new Date());
     let prompt;
@@ -254,14 +257,20 @@ Example: "明天提醒我开会，比较急" → {"text":"开会","priority":"P1
     try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 15000);
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        const baseUrl = settings.region === 'china_mainland' && (settings.cnRewriteBaseUrl || settings.cnBaseUrl)
+            ? (settings.cnRewriteBaseUrl || settings.cnBaseUrl).replace(/\/$/, '')
+            : 'https://api.openai.com';
+        const model = settings.region === 'china_mainland'
+            ? (settings.cnRewriteModel || settings.openaiModel || 'gpt-4o-mini')
+            : (settings.openaiModel || 'gpt-4o-mini');
+        const res = await fetch(`${baseUrl}/v1/chat/completions`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${settings.openaiApiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: settings.openaiModel || 'gpt-4o-mini',
+                model,
                 messages: [
                     { role: 'system', content: prompt },
                     { role: 'user', content: text }
