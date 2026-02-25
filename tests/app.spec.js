@@ -110,7 +110,7 @@ test('todo image management controls are visible for item with image', async ({ 
 
   const item = page.locator('.todo-item[data-id="todo-image-1"]');
   await expect(item.locator('.todo-image-add-btn')).toBeVisible();
-  await expect(item.locator('.todo-image-replace-btn')).toBeVisible();
-  await expect(item.locator('.todo-image-delete-btn')).toBeVisible();
+  await expect(item.locator('.todo-image-summary')).toBeVisible();
+  await expect(item.locator('.todo-image-count')).toHaveText('1');
   await expect(item.locator('.todo-image-count-hint')).toHaveText('1/10');
 });

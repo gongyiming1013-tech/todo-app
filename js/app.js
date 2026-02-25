@@ -6,7 +6,7 @@ import {
     handleLogin, handleRegister, handleResetPassword, handleSetNewPassword, handleLogout
 } from './auth.js';
 import { loadTodos, subscribeToChanges, addTodo, updateTodoStatus, updateTodoPriority, deleteTodo, setTodos, updateTodoEta, updateTodoCategory, updateTodoText, addTodoImage, replaceTodoImage, deleteTodoImage, DEFAULT_CATEGORIES } from './todos.js';
-import { setupImageUploadEvents, showImageModal } from './imageUpload.js';
+import { setupImageUploadEvents, showImageModal, showImageOverlay } from './imageUpload.js';
 import { populateSettingsModal, updateSettingsVisibility, saveSettingsFromModal, syncSettingsForUser, setSettingsSupabaseClient } from './settings.js';
 import { startListening, stopListening, setOnStateChange, setOnResult, setOnError, VoiceState } from './voice/voiceService.js';
 import { getVoiceDebugLogs, clearVoiceDebugLogs, logVoiceEvent } from './voice/debugLog.js';
@@ -119,6 +119,10 @@ function pickImageFile(onFile) {
 
 document.getElementById('todoList').addEventListener('click', async (e) => {
     const thumb = e.target.closest('.todo-image-thumb');
+    if (thumb?.dataset.todoId) {
+        showImageOverlay(thumb.dataset.todoId);
+        return;
+    }
     if (thumb?.dataset.imageUrl) {
         showImageModal(thumb.dataset.imageUrl);
         return;
