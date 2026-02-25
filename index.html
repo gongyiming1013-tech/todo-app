@@ -116,11 +116,13 @@
                         <option value="external">External App (e.g. Typeless)</option>
                     </select>
                 </div>
+                <div class="setting-group"><label class="setting-label">API Region</label><select class="setting-select" id="regionSelect"><option value="global">Global</option><option value="china_mainland">China mainland</option></select></div>
                 <div class="setting-group" id="openaiSettingsSection">
                     <label class="setting-label">OpenAI API Key</label>
                     <input type="password" class="setting-input" id="openaiApiKeyInput" placeholder="sk-...">
                     <p class="setting-hint">Your key is saved to your account and syncs across your devices.</p>
                 </div>
+                <div class="setting-group" id="cnApiKeysSection" style="display:none;"><label class="setting-label">STT API Key</label><input type="password" class="setting-input" id="cnSttApiKeyInput" placeholder="STT Key"><label class="setting-label" style="margin-top:10px;">STT Base URL</label><input type="text" class="setting-input" id="cnSttBaseUrlInput" placeholder="https://api.openai.com"><label class="setting-label" style="margin-top:10px;">STT Model Name</label><input type="text" class="setting-input" id="cnSttModelInput" placeholder="whisper-1"><label class="setting-label" style="margin-top:10px;">Rewrite API Key</label><input type="password" class="setting-input" id="cnRewriteApiKeyInput" placeholder="Rewrite Key"><label class="setting-label" style="margin-top:10px;">Rewrite Base URL</label><input type="text" class="setting-input" id="cnRewriteBaseUrlInput" placeholder="https://api.openai.com"><label class="setting-label" style="margin-top:10px;">Rewrite Model Name</label><input type="text" class="setting-input" id="cnRewriteModelInput" placeholder="gpt-4o-mini"></div>
                 <div class="setting-group" id="externalSettingsSection" style="display:none;">
                     <label class="setting-label">External App URL (Optional)</label>
                     <input type="text" class="setting-input" id="externalAppUrlInput" placeholder="e.g. typeless://start">
