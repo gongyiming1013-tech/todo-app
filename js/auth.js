@@ -88,18 +88,22 @@ export async function handleLogin() {
         btn.textContent = 'Sign In';
 
         if (error) {
-            if (error.message.includes('Email not confirmed')) {
+            const msg = typeof error.message === 'string' ? error.message
+                : (typeof error === 'string' ? error : JSON.stringify(error));
+            if (msg.includes('Email not confirmed')) {
                 showMessage('Email not verified. Please check your inbox and click the verification link.', 'error');
-            } else if (error.message.includes('Invalid login credentials')) {
+            } else if (msg.includes('Invalid login credentials')) {
                 showMessage('邮箱或密码错误；如果你刚注册，可能是 Supabase 仍开启了邮箱验证。', 'error');
             } else {
-                showMessage('Sign in failed: ' + error.message, 'error');
+                showMessage('Sign in failed: ' + msg, 'error');
             }
         }
     } catch (e) {
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        showMessage('Sign in failed: ' + e.message, 'error');
+        const msg = typeof e?.message === 'string' ? e.message
+            : (typeof e === 'string' ? e : JSON.stringify(e));
+        showMessage('Sign in failed: ' + msg, 'error');
     }
 }
 
