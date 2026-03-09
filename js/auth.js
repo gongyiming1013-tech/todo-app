@@ -64,6 +64,19 @@ export function showApp() {
     document.getElementById('appContainer').style.display = 'block';
 }
 
+function formatErrorMessage(err) {
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    if (typeof err.message === 'string') return err.message;
+    if (typeof err.error_description === 'string') return err.error_description;
+    if (err.error && typeof err.error.message === 'string') return err.error.message;
+    try {
+        return JSON.stringify(err);
+    } catch {
+        return String(err);
+    }
+}
+
 export async function handleLogin() {
     if (!supabase) {
         showMessage('Connection failed. Please refresh the page.', 'error');
@@ -88,18 +101,24 @@ export async function handleLogin() {
         btn.textContent = 'Sign In';
 
         if (error) {
-            if (error.message.includes('Email not confirmed')) {
+            const msg = formatErrorMessage(error);
+            if (msg.includes('Email not confirmed')) {
                 showMessage('Email not verified. Please check your inbox and click the verification link.', 'error');
-            } else if (error.message.includes('Invalid login credentials')) {
+            } else if (msg.includes('Invalid login credentials')) {
                 showMessage('邮箱或密码错误；如果你刚注册，可能是 Supabase 仍开启了邮箱验证。', 'error');
+            } else if (msg.includes('UPSTREAM_DNS_1016') || msg.includes('error code: 1016')) {
+                showMessage('Sign in failed: 网络到 Supabase 不稳定（Cloudflare 1016）。请稍后重试，或切换 DNS/网络。', 'error');
+            } else if (msg.includes('Failed to fetch')) {
+                showMessage('Sign in failed: 网络请求失败，请检查当前网络/DNS 后重试。', 'error');
             } else {
-                showMessage('Sign in failed: ' + error.message, 'error');
+                showMessage('Sign in failed: ' + msg, 'error');
             }
         }
     } catch (e) {
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        showMessage('Sign in failed: ' + e.message, 'error');
+        const msg = formatErrorMessage(e);
+        showMessage('Sign in failed: ' + msg, 'error');
     }
 }
 
