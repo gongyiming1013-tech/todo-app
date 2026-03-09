@@ -136,3 +136,35 @@ npx serve .
 ### Storage Bucket
 
 创建名为 `todo-images` 的公开 bucket 用于存储图片附件。
+
+## 登录故障排查（Cloudflare + Supabase）
+
+### 当前路由策略
+
+- `js/config.js` 提供以下策略：
+  - `proxy-first`（默认，线上推荐）：优先走同源 Cloudflare Pages Function，再回退直连 Supabase
+  - `direct-first`（localhost 默认）
+  - `proxy-only` / `direct-only`（排障应急）
+
+### 快速健康检查清单
+
+1. **先看 Supabase 官方状态页**
+   - https://status.supabase.com
+2. **核对项目配置**
+   - `SUPABASE_DIRECT_URL` 是否与项目 URL 一致
+   - `SUPABASE_ANON_KEY` 是否来自同一个项目
+3. **核对 Auth 配置（Supabase Dashboard）**
+   - Site URL 包含当前 Pages 域名
+   - Additional Redirect URLs 包含 `https://todo-app-frontend-3ft.pages.dev`
+   - Email Confirm / Provider 配置符合预期
+4. **探测代理链路**
+   - `curl -i https://todo-app-frontend-3ft.pages.dev/auth/v1/health`
+   - 若返回 `UPSTREAM_DNS_1016`，说明 Cloudflare->Supabase 上游 DNS 仍异常
+5. **探测直连链路**
+   - `curl -i https://<project-ref>.supabase.co/auth/v1/health`
+   - 若本地 DNS 无法解析，可尝试切换 DNS（1.1.1.1 / 8.8.8.8）或更换网络
+
+### 说明
+
+- Cloudflare 代理并非临时方案；它是为跨区域可用性（尤其中国网络）保留的主路径。
+- 当代理或直连单一路径异常时，客户端会按策略自动切换并短期记忆，减少反复抖动。
